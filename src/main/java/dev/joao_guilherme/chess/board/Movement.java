@@ -6,6 +6,7 @@ import dev.joao_guilherme.chess.enums.Color;
 public abstract class Movement {
 
     private static boolean noPieceInBetweenDiagonal(Position from, Position to) {
+        if (to == null || from == null || from.equals(to)) return false;
         int rowDirection = Integer.signum(to.getRow() - from.getRow());
         int columnDirection = Integer.signum(to.getColumn() - from.getColumn());
         int currentRow = from.getRow() + rowDirection;
@@ -23,6 +24,7 @@ public abstract class Movement {
     }
 
     private static boolean noPieceInBetweenStraight(Position from, Position to) {
+        if (to == null || from == null || from.equals(to)) return false;
         int rowDirection = Integer.signum(to.getRow() - from.getRow());
         int columnDirection = Integer.signum(to.getColumn() - from.getColumn());
         int currentRow = from.getRow() + rowDirection;
@@ -40,6 +42,10 @@ public abstract class Movement {
 
     private static boolean noSameColorPieceAtTarget(Color color, Position to) {
         return Board.getInstance().getPieceAt(to).map(piece -> piece.isNotSameColor(color)).orElse(true);
+    }
+
+    public static boolean noPieceAtTarget(Position to) {
+        return Board.getInstance().findPieceAt(to).isEmpty();
     }
 
     public static boolean isDiagonal(Position from, Position to) {
