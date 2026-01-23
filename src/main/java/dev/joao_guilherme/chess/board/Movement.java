@@ -54,19 +54,19 @@ public abstract class Movement {
 
     public static boolean isDiagonal(Position from, Position to) {
         if (to == null || from == null || from.equals(to)) return false;
-        return Math.abs(from.getColumn() - to.getColumn()) == Math.abs(from.getRow() - to.getRow()) && noPieceInBetweenDiagonal(from, to) && noSameColorPieceAtTarget(Board.getInstance().getPieceAt(from).orElseThrow(IllegalStateException::new).getColor(), to);
+        return Math.abs(from.getColumn() - to.getColumn()) == Math.abs(from.getRow() - to.getRow());
     }
 
     public static boolean isStraight(Position from, Position to) {
         if (to == null || from == null || from.equals(to)) return false;
-        return (from.getColumn() == to.getColumn() || from.getRow() == to.getRow()) && noPieceInBetweenStraight(from, to) && noSameColorPieceAtTarget(Board.getInstance().getPieceAt(from).orElseThrow(IllegalStateException::new).getColor(), to);
+        return (from.getColumn() == to.getColumn() || from.getRow() == to.getRow());
     }
 
     public static boolean isLShaped(Position from, Position to) {
         if (to == null || from == null || from.equals(to)) return false;
         int rowDiff = Math.abs(from.getRow() - to.getRow());
         int columnDiff = Math.abs(from.getColumn() - to.getColumn());
-        return (rowDiff == 2 && columnDiff == 1) || (rowDiff == 1 && columnDiff == 2) && noSameColorPieceAtTarget(Board.getInstance().getPieceAt(from).orElseThrow(IllegalStateException::new).getColor(), to);
+        return (rowDiff == 2 && columnDiff == 1) || (rowDiff == 1 && columnDiff == 2);
     }
 
     public static boolean isUpward(Position from, Position to, Color color) {
