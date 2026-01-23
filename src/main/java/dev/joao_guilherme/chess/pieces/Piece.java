@@ -11,6 +11,7 @@ public abstract sealed class Piece permits Bishop, King, Knight, Queen, Pawn, Ro
     final String name;
     final String symbolPath;
     Position position;
+    boolean hasMoved = false;
 
     protected Piece(Color color, String name, Position position) {
         this.color = color;
@@ -24,6 +25,7 @@ public abstract sealed class Piece permits Bishop, King, Knight, Queen, Pawn, Ro
     public boolean moveTo(Position newPosition) {
         if (isValidMove(newPosition)) {
             this.position = newPosition;
+            hasMoved = true;
             return true;
         }
         return false;
@@ -60,5 +62,9 @@ public abstract sealed class Piece permits Bishop, King, Knight, Queen, Pawn, Ro
     @Override
     public String toString() {
         return "%s-%s".formatted(name, position);
+    }
+
+    public boolean hasMoved() {
+        return hasMoved;
     }
 }
