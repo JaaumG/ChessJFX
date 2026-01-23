@@ -123,21 +123,15 @@ public class Board {
     }
 
     public boolean movePiece(Position from, Position to) {
-        Piece piece = getPieceAt(from).orElseThrow(() -> new IllegalArgumentException("No piece at " + from));
+        Piece piece = getPieceAt(from);
         if (piece.getColor() != turn) return false;
-        if (piece instanceof King king && !isSafePositionForKing(king, to)) throw new IllegalArgumentException("Cannot move king to " + to + " as it would be in check");
-        if (isKingInCheck(turn) && isPiecePreventingCheck(piece)) {
-            throw new IllegalArgumentException("Cannot move piece as it would be in check");
+        Optional<Piece> pieceAtTargetMove = findPieceAt(to);
+        if (piece.moveTo(to)) {
+            pieceAtTargetMove.ifPresent(this::capturePiece);
+            nextTurn();
+            return true;
         }
-        getPieceAt(to).ifPresent(pieceAtDest -> {
-            if (pieceAtDest.getColor() == piece.getColor()) {
-                throw new IllegalArgumentException("Cannot capture your own piece at " + to);
-            }
-            capturePiece(pieceAtDest);
-        });
-        piece.moveTo(to);
-        nextTurn();
-        return true;
+        return false;
     }
 
     public Color getTurn() {
