@@ -80,6 +80,18 @@ public class Board {
         ).stream().collect(Collectors.groupingBy(Piece::getColor, Collectors.toSet()));
     }
 
+    public boolean isCheckMate(Color color) {
+        if (isKingInCheck(color)) {
+            for (Piece piece : pieces.get(color)) {
+                if (!getPositionsAvailableForPiece(piece).isEmpty()) {
+                    return false;
+                }
+            }
+            return true;
+        }
+        return false;
+    }
+
     public boolean isKingInCheck(Color color) {
         King king = pieces.get(color).stream().filter(King.class::isInstance).map(King.class::cast).findFirst().orElseThrow(() -> new IllegalStateException(color.name() + " king not found"));
         return pieces.get(color.opposite()).stream().anyMatch(piece -> piece.isValidMove(king.getPosition()));
