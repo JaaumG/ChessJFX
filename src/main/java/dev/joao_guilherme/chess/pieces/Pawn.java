@@ -17,7 +17,7 @@ public final class Pawn extends Piece {
     @Override
     public boolean isValidMove(Position newPosition) {
         return (isUpward(this.position, newPosition, this.color)
-               && distance(this.position, newPosition) <= (hasMoved ? FIRST_MOVE_DISTANCE : SECOND_MOVE_DISTANCE)
+               && distance(this.position, newPosition) <= (hasMoved ? SECOND_MOVE_DISTANCE : FIRST_MOVE_DISTANCE)
                && noPieceAtTarget(newPosition))
                || (isDiagonal(this.position, newPosition) && distance(this.position, newPosition) == 2
                 && noSameColorPieceAtTarget(this.color, newPosition) && !noPieceAtTarget(newPosition));
