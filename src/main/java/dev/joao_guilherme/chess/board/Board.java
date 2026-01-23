@@ -6,6 +6,10 @@ import dev.joao_guilherme.chess.pieces.*;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import static dev.joao_guilherme.chess.board.Position.*;
+import static dev.joao_guilherme.chess.enums.Color.BLACK;
+import static dev.joao_guilherme.chess.enums.Color.WHITE;
+
 public class Board {
 
     private static Board instance;
@@ -13,19 +17,19 @@ public class Board {
     private Color turn;
 
     private final Position[][] positions = {
-            {Position.A8, Position.B8, Position.C8, Position.D8, Position.E8, Position.F8, Position.G8, Position.H8},
-            {Position.A7, Position.B7, Position.C7, Position.D7, Position.E7, Position.F7, Position.G7, Position.H7},
-            {Position.A6, Position.B6, Position.C6, Position.D6, Position.E6, Position.F6, Position.G6, Position.H6},
-            {Position.A5, Position.B5, Position.C5, Position.D5, Position.E5, Position.F5, Position.G5, Position.H5},
-            {Position.A4, Position.B4, Position.C4, Position.D4, Position.E4, Position.F4, Position.G4, Position.H4},
-            {Position.A3, Position.B3, Position.C3, Position.D3, Position.E3, Position.F3, Position.G3, Position.H3},
-            {Position.A2, Position.B2, Position.C2, Position.D2, Position.E2, Position.F2, Position.G2, Position.H2},
-            {Position.A1, Position.B1, Position.C1, Position.D1, Position.E1, Position.F1, Position.G1, Position.H1}
+            {A8, B8, C8, D8, E8, F8, G8, H8},
+            {A7, B7, C7, D7, E7, F7, G7, H7},
+            {A6, B6, C6, D6, E6, F6, G6, H6},
+            {A5, B5, C5, D5, E5, F5, G5, H5},
+            {A4, B4, C4, D4, E4, F4, G4, H4},
+            {A3, B3, C3, D3, E3, F3, G3, H3},
+            {A2, B2, C2, D2, E2, F2, G2, H2},
+            {A1, B1, C1, D1, E1, F1, G1, H1}
     };
 
     private Board() {
         setupInitialPositions();
-        turn = Color.WHITE;
+        turn = WHITE;
     }
 
     public static Board getInstance() {
@@ -37,39 +41,39 @@ public class Board {
 
     private void setupInitialPositions() {
         pieces = Set.of(
-                new Rook(Color.WHITE, Position.A1),
-                new Knight(Color.WHITE, Position.B1),
-                new Bishop(Color.WHITE, Position.C1),
-                new Queen(Color.WHITE, Position.D1),
-                new King(Color.WHITE, Position.E1),
-                new Bishop(Color.WHITE, Position.F1),
-                new Knight(Color.WHITE, Position.G1),
-                new Rook(Color.WHITE, Position.H1),
-                new Pawn(Color.WHITE, Position.A2),
-                new Pawn(Color.WHITE, Position.B2),
-                new Pawn(Color.WHITE, Position.C2),
-                new Pawn(Color.WHITE, Position.D2),
-                new Pawn(Color.WHITE, Position.E2),
-                new Pawn(Color.WHITE, Position.F2),
-                new Pawn(Color.WHITE, Position.G2),
-                new Pawn(Color.WHITE, Position.H2),
+                new Rook(WHITE, A1),
+                new Knight(WHITE, B1),
+                new Bishop(WHITE, C1),
+                new Queen(WHITE, D1),
+                new King(WHITE, E1),
+                new Bishop(WHITE, F1),
+                new Knight(WHITE, G1),
+                new Rook(WHITE, H1),
+                new Pawn(WHITE, A2),
+                new Pawn(WHITE, B2),
+                new Pawn(WHITE, C2),
+                new Pawn(WHITE, D2),
+                new Pawn(WHITE, E2),
+                new Pawn(WHITE, F2),
+                new Pawn(WHITE, G2),
+                new Pawn(WHITE, H2),
 
-                new Rook(Color.BLACK, Position.A8),
-                new Knight(Color.BLACK, Position.B8),
-                new Bishop(Color.BLACK, Position.C8),
-                new Queen(Color.BLACK, Position.D8),
-                new King(Color.BLACK, Position.E8),
-                new Bishop(Color.BLACK, Position.F8),
-                new Knight(Color.BLACK, Position.G8),
-                new Rook(Color.BLACK, Position.H8),
-                new Pawn(Color.BLACK, Position.A7),
-                new Pawn(Color.BLACK, Position.B7),
-                new Pawn(Color.BLACK, Position.C7),
-                new Pawn(Color.BLACK, Position.D7),
-                new Pawn(Color.BLACK, Position.E7),
-                new Pawn(Color.BLACK, Position.F7),
-                new Pawn(Color.BLACK, Position.G7),
-                new Pawn(Color.BLACK, Position.H7)
+                new Rook(BLACK, A8),
+                new Knight(BLACK, B8),
+                new Bishop(BLACK, C8),
+                new Queen(BLACK, D8),
+                new King(BLACK, E8),
+                new Bishop(BLACK, F8),
+                new Knight(BLACK, G8),
+                new Rook(BLACK, H8),
+                new Pawn(BLACK, A7),
+                new Pawn(BLACK, B7),
+                new Pawn(BLACK, C7),
+                new Pawn(BLACK, D7),
+                new Pawn(BLACK, E7),
+                new Pawn(BLACK, F7),
+                new Pawn(BLACK, G7),
+                new Pawn(BLACK, H7)
         ).stream().collect(Collectors.groupingBy(Piece::getColor, Collectors.toSet()));
     }
 
