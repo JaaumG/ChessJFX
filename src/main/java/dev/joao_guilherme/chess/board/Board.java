@@ -7,15 +7,16 @@ import java.util.*;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
-import static dev.joao_guilherme.chess.board.Movement.isCastling;
-import static dev.joao_guilherme.chess.board.Movement.noPieceInBetween;
+import static dev.joao_guilherme.chess.board.Movement.*;
 import static dev.joao_guilherme.chess.board.Position.*;
 import static dev.joao_guilherme.chess.enums.Color.BLACK;
 import static dev.joao_guilherme.chess.enums.Color.WHITE;
+import static java.lang.Math.abs;
 import static java.util.function.Predicate.not;
 
 public class Board {
 
+    private Optional<Position> enPassantAvailablePosition = Optional.empty();
     private static Board instance;
     private final Position[][] positions = {
             {A8, B8, C8, D8, E8, F8, G8, H8},
@@ -98,7 +99,7 @@ public class Board {
         if (piece == null || !pieces.get(piece.getColor()).contains(piece) || !piece.isValidMove(to)) return false;
         Position original = piece.getPosition();
 
-        Optional<Piece> target = findPieceAt(to);
+        Optional<Piece> target = piece instanceof Pawn pawn && isEnPassant(original, to, pawn.getColor()) ? getPawnForEnPassant(pawn, to).map(Piece.class::cast) : findPieceAt(to);
         target.ifPresent(t -> pieces.get(t.getColor()).remove(t));
 
         piece.setPosition(to);
@@ -112,6 +113,10 @@ public class Board {
 
     public boolean isNotSafePositionForKing(King king, Position position) {
         return pieces.get(king.getColor().opposite()).stream().anyMatch(piece -> piece.isValidMove(position));
+    }
+
+    public boolean isPawnTwoRowFirstMove(Position from, Position to) {
+        return abs(from.getRow() - to.getRow()) == 2;
     }
 
     public Piece getPieceAt(Position position) {
@@ -142,6 +147,7 @@ public class Board {
         return getPositions().stream()
                 .filter(piece::isValidMove)
                 .filter(isValidMovementForKing(piece))
+                .filter(isValidMovementForPawn(piece))
                 .filter(to -> isSafeMove(piece, to))
                 .toList();
     }
@@ -161,6 +167,20 @@ public class Board {
         };
     }
 
+    private Predicate<Position> isValidMovementForPawn(Piece piece) {
+        if (!(piece instanceof Pawn pawn)) {
+            return _ -> true;
+        }
+        return pos -> {
+            if (isEnPassant(pawn.getPosition(), pos, pawn.getColor())) {
+                return enPassantAvailablePosition.isPresent()
+                        && enPassantAvailablePosition.get().equals(pos)
+                        && getPawnForEnPassant(pawn, pos).isPresent();
+            }
+            return true;
+        };
+    }
+
     public boolean movePiece(Position from, Position to) {
         Piece piece = getPieceAt(from);
         if (piece.getColor() != turn) return false;
@@ -168,6 +188,11 @@ public class Board {
         if (piece instanceof King king) {
             if (isNotSafePositionForKing(king, to)) return false;
             if (isCastling(from, to)) return performCastlingMove(king, to);
+        }
+        if (piece instanceof Pawn pawn) {
+            if (isPawnTwoRowFirstMove(from, to)) enPassantAvailablePosition = Optional.of(Position.of(from.file(), (from.rank() + to.rank()) / 2));
+            else if (isEnPassant(from, to, pawn.getColor())) return performEnPassantMove(pawn, to);
+            else enPassantAvailablePosition = Optional.empty();
         }
         if (!isSafeMove(piece, to)) return false;
         if (piece.moveTo(to)) {
@@ -189,6 +214,29 @@ public class Board {
                     nextTurn();
                     return true;
                 }).orElse(false);
+    }
+
+    private boolean performEnPassantMove(Pawn pawn, Position to) {
+        return getPawnForEnPassant(pawn, to)
+                .filter(_ -> isSafeMove(pawn, to))
+                .map(piece -> {
+                    capturePiece(piece);
+                    pawn.moveTo(to);
+                    nextTurn();
+                    return true;
+                }).orElse(false);
+    }
+
+    private Optional<Pawn> getPawnForEnPassant(Pawn pawn, Position to) {
+        Position enemyPos = Position.of(to.file(), pawn.getPosition().rank());
+
+        Optional<Piece> enemy = findPieceAt(enemyPos);
+
+        if (enemy.isPresent() && enemy.get() instanceof Pawn enemyPawn && enPassantAvailablePosition.isPresent() && enPassantAvailablePosition.get().equals(to)) {
+            return Optional.of(enemyPawn);
+        }
+
+        return Optional.empty();
     }
 
     private Optional<Rook> getRookForCastling(King king, Position to) {
