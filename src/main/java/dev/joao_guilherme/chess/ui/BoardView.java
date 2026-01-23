@@ -48,6 +48,7 @@ public class BoardView extends GridPane {
             PositionView stackPane = squares.get(piece.getPosition());
             stackPane.getChildren().add(new PieceView(piece));
         });
+        validateForCheckmate();
     }
 
     public void performMove(Position origin, Position target) {
@@ -60,5 +61,18 @@ public class BoardView extends GridPane {
 
     public Color getTurn() {
         return Board.getInstance().getTurn();
+    }
+
+    private void validateForCheckmate() {
+        if (Board.getInstance().isCheckMate(getTurn())) {
+            Position kingPosition = Board.getInstance().findKing(getTurn()).getPosition();
+            squares.get(kingPosition).getChildren().stream().filter(PieceView.class::isInstance)
+                    .map(PieceView.class::cast)
+                    .forEach(kingView -> {
+                        kingView.setStyle("-fx-effect: dropshadow(three-pass-box, red, 20, 0, 0, 0);");
+                        kingView.setRotate(-90);
+                    });
+            System.out.println("Checkmate! " + getTurn().opposite() + " wins.");
+        }
     }
 }
