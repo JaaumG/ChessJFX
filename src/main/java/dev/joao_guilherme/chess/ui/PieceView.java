@@ -20,6 +20,7 @@ public class PieceView extends ImageView {
             setImage(image);
             setFitWidth(PIECE_SIZE);
             setFitHeight(PIECE_SIZE);
+            setPickOnBounds(true);
             setPreserveRatio(true);
             setSmooth(true);
             setOnDragDetected(event -> {
