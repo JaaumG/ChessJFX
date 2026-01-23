@@ -91,7 +91,7 @@ public class Board {
     }
 
     public boolean isSafePositionForKing(King king, Position position) {
-        return pieces.get(king.getColor().opposite()).stream().anyMatch(piece -> piece.isValidMove(position));
+        return pieces.get(king.getColor().opposite()).stream().noneMatch(piece -> piece.isValidMove(position));
     }
 
     public Piece getPieceAt(Position position) {
