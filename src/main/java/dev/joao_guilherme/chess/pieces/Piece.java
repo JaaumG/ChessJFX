@@ -24,7 +24,7 @@ public abstract sealed class Piece permits Bishop, King, Knight, Queen, Pawn, Ro
 
     public boolean moveTo(Position newPosition) {
         if (isValidMove(newPosition)) {
-            this.position = newPosition;
+            setPosition(newPosition);
             hasMoved = true;
             return true;
         }
@@ -47,6 +47,15 @@ public abstract sealed class Piece permits Bishop, King, Knight, Queen, Pawn, Ro
         return position;
     }
 
+    /**
+     * For performing a move use the {@link Piece#moveTo(Position)}
+     *
+     * this method is used internally to validation of moves and evaluation
+     */
+    public void setPosition(Position position) {
+        this.position = position;
+    }
+
     public boolean isSameColor(Piece piece) {
         return this.color == Objects.requireNonNull(piece).getColor();
     }
@@ -67,4 +76,5 @@ public abstract sealed class Piece permits Bishop, King, Knight, Queen, Pawn, Ro
     public boolean hasMoved() {
         return hasMoved;
     }
+
 }
