@@ -5,6 +5,10 @@ import dev.joao_guilherme.chess.enums.Color;
 
 public abstract class Movement {
 
+    public static boolean noPieceInBetween(Position from, Position to) {
+        return isDiagonal(from, to) ? noPieceInBetweenDiagonal(from, to) : noPieceInBetweenStraight(from, to);
+    }
+
     private static boolean noPieceInBetweenDiagonal(Position from, Position to) {
         if (to == null || from == null || from.equals(to)) return false;
         int rowDirection = Integer.signum(to.getRow() - from.getRow());
@@ -14,7 +18,7 @@ public abstract class Movement {
 
         while (currentRow != to.getRow() && currentColumn != to.getColumn()) {
             Position currentPosition = new Position(currentColumn, currentRow);
-            if (Board.getInstance().getPieceAt(currentPosition).map(piece -> piece.isSameColor(Board.getInstance().getPieceAt(from).orElseThrow(IllegalStateException::new))).isPresent()) {
+            if (Board.getInstance().findPieceAt(currentPosition).map(piece -> piece.isSameColor(Board.getInstance().getPieceAt(from))).isPresent()) {
                 return false;
             }
             currentRow += rowDirection;
@@ -31,7 +35,7 @@ public abstract class Movement {
         int currentColumn = from.getColumn() + columnDirection;
         while (currentRow != to.getRow() || currentColumn != to.getColumn()) {
             Position currentPosition = new Position(currentColumn, currentRow);
-            if (Board.getInstance().getPieceAt(currentPosition).map(piece -> piece.isSameColor(Board.getInstance().getPieceAt(from).orElseThrow(IllegalStateException::new))).isPresent()) {
+            if (Board.getInstance().findPieceAt(currentPosition).map(piece -> piece.isSameColor(Board.getInstance().getPieceAt(from))).isPresent()) {
                 return false;
             }
             currentRow += rowDirection;
@@ -40,8 +44,8 @@ public abstract class Movement {
         return true;
     }
 
-    private static boolean noSameColorPieceAtTarget(Color color, Position to) {
-        return Board.getInstance().getPieceAt(to).map(piece -> piece.isNotSameColor(color)).orElse(true);
+    public static boolean noSameColorPieceAtTarget(Color color, Position to) {
+        return Board.getInstance().findPieceAt(to).map(piece -> piece.isNotSameColor(color)).orElse(true);
     }
 
     public static boolean noPieceAtTarget(Position to) {
