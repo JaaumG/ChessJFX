@@ -93,8 +93,7 @@ public class Board {
     }
 
     public boolean isKingInCheck(Color color) {
-        King king = pieces.get(color).stream().filter(King.class::isInstance).map(King.class::cast).findFirst().orElseThrow(() -> new IllegalStateException(color.name() + " king not found"));
-        return pieces.get(color.opposite()).stream().anyMatch(piece -> piece.isValidMove(king.getPosition()));
+        return pieces.get(color.opposite()).stream().anyMatch(piece -> piece.isValidMove(findKing(color).getPosition()));
     }
 
     public boolean isPieceMovementPreventingCheck(Piece piece, Position to) {
@@ -226,5 +225,9 @@ public class Board {
             }
             System.out.println();
         }
+    }
+
+    public King findKing(Color turn) {
+        return pieces.get(turn).stream().filter(King.class::isInstance).map(King.class::cast).findFirst().orElseThrow(() -> new IllegalStateException(turn + " king not found"));
     }
 }
