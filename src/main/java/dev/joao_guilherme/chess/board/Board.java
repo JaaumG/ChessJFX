@@ -80,9 +80,9 @@ public class Board {
         ).stream().collect(Collectors.groupingBy(Piece::getColor, Collectors.toSet()));
     }
 
-    public boolean isCheckMate() {
-        if (!isCheck()) return false;
-        for (Piece piece : pieces.get(turn)) {
+    public boolean isCheckMate(Color color) {
+        if (!isKingInCheck(color)) return false;
+        for (Piece piece : pieces.get(color)) {
             if (!getPositionsAvailableForPiece(piece).isEmpty()) {
                 return false;
             }
@@ -90,8 +90,8 @@ public class Board {
         return true;
     }
 
-    public boolean isCheck() {
-        return pieces.get(turn.opposite()).stream().anyMatch(piece -> piece.isValidMove(findKing(turn).getPosition()));
+    public boolean isKingInCheck(Color color) {
+        return pieces.get(color.opposite()).stream().anyMatch(piece -> piece.isValidMove(findKing(color).getPosition()));
     }
 
     public boolean isPieceMovementAvoidingCheck(Piece piece, Position to) {
@@ -102,7 +102,7 @@ public class Board {
         target.ifPresent(t -> pieces.get(t.getColor()).remove(t));
 
         piece.setPosition(to);
-        boolean kingInCheck = isCheck();
+        boolean kingInCheck = isKingInCheck(piece.getColor());
 
         piece.setPosition(original);
         target.ifPresent(t -> pieces.get(t.getColor()).add(t));
