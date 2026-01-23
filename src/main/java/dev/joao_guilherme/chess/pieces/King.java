@@ -1,8 +1,9 @@
 package dev.joao_guilherme.chess.pieces;
 
-import dev.joao_guilherme.chess.board.Movement;
 import dev.joao_guilherme.chess.board.Position;
 import dev.joao_guilherme.chess.enums.Color;
+
+import static dev.joao_guilherme.chess.board.Movement.*;
 
 public final class King extends Piece {
 
@@ -12,6 +13,8 @@ public final class King extends Piece {
 
     @Override
     public boolean isValidMove(Position newPosition) {
-        return (Movement.isStraight(this.position, newPosition) || Movement.isDiagonal(this.position, newPosition)) && Movement.distance(this.position, newPosition) <= 1;
+        return ((isStraight(this.position, newPosition) && distance(this.position, newPosition) == 1)
+                || (isDiagonal(this.position, newPosition) && distance(this.position, newPosition) == 2))
+                && noSameColorPieceAtTarget(this.color, newPosition);
     }
 }
