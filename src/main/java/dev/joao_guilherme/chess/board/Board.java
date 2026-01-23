@@ -4,6 +4,7 @@ import dev.joao_guilherme.chess.enums.Color;
 import dev.joao_guilherme.chess.pieces.*;
 
 import java.util.*;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import static dev.joao_guilherme.chess.board.Movement.isCastling;
@@ -138,33 +139,39 @@ public class Board {
     }
 
     public List<Position> getPositionsAvailableForPiece(Piece piece) {
-        return getPositions().stream().filter(piece::isValidMove)
-                .filter(position -> {
-                    if (piece instanceof King king) {
-                        if (isNotSafePositionForKing(king, position)) return false;
-                        return !isCastling(king.getPosition(), position) || !getRookForCastling(king, position).map(Piece::hasMoved).orElse(true);
-                    }
-                    return true;
-                })
-                .filter(position -> {
-                    if (isKingInCheck(piece.getColor())) return isPieceMovementPreventingCheck(piece, position);
-                    return !isPiecePreventingCheck(piece) || isPieceMovementPreventingCheck(piece, position);
-                })
+        return getPositions().stream()
+                .filter(piece::isValidMove)
+                .filter(isValidMovementForKing(piece))
+                .filter(to -> isSafeMove(piece, to))
                 .toList();
+    }
+
+    private boolean isSafeMove(Piece piece, Position to) {
+        return isPieceMovementPreventingCheck(piece, to);
+    }
+
+    private Predicate<Position> isValidMovementForKing(Piece piece) {
+        if (!(piece instanceof King king)) {
+            return _ -> true;
+        }
+        return pos -> {
+            if (isNotSafePositionForKing(king, pos)) return false;
+            if (isCastling(king.getPosition(), pos)) return getRookForCastling(king, pos).filter(r -> !r.hasMoved()).isPresent();
+            return true;
+        };
     }
 
     public boolean movePiece(Position from, Position to) {
         Piece piece = getPieceAt(from);
         if (piece.getColor() != turn) return false;
-        Optional<Piece> pieceAtTargetMove = findPieceAt(to);
+        Optional<Piece> target = findPieceAt(to);
         if (piece instanceof King king) {
             if (isNotSafePositionForKing(king, to)) return false;
             if (isCastling(from, to)) return performCastlingMove(king, to);
         }
-        if (isKingInCheck(turn) && !isPieceMovementPreventingCheck(piece, to)) return false;
-        if (!isKingInCheck(turn) && !(!isPiecePreventingCheck(piece) || isPieceMovementPreventingCheck(piece, to))) return false;
+        if (!isSafeMove(piece, to)) return false;
         if (piece.moveTo(to)) {
-            pieceAtTargetMove.ifPresent(this::capturePiece);
+            target.ifPresent(this::capturePiece);
             nextTurn();
             return true;
         }
