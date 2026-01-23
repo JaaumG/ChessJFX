@@ -6,16 +6,15 @@ import dev.joao_guilherme.chess.pieces.*;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import static dev.joao_guilherme.chess.board.Movement.isCastling;
 import static dev.joao_guilherme.chess.board.Position.*;
 import static dev.joao_guilherme.chess.enums.Color.BLACK;
 import static dev.joao_guilherme.chess.enums.Color.WHITE;
+import static java.util.function.Predicate.not;
 
 public class Board {
 
     private static Board instance;
-    private Map<Color, Set<Piece>> pieces;
-    private Color turn;
-
     private final Position[][] positions = {
             {A8, B8, C8, D8, E8, F8, G8, H8},
             {A7, B7, C7, D7, E7, F7, G7, H7},
@@ -26,6 +25,8 @@ public class Board {
             {A2, B2, C2, D2, E2, F2, G2, H2},
             {A1, B1, C1, D1, E1, F1, G1, H1}
     };
+    private Map<Color, Set<Piece>> pieces;
+    private Color turn;
 
     private Board() {
         setupInitialPositions();
@@ -127,6 +128,7 @@ public class Board {
         Piece piece = getPieceAt(from);
         if (piece.getColor() != turn) return false;
         Optional<Piece> pieceAtTargetMove = findPieceAt(to);
+        if (piece instanceof King king && isCastling(from, to)) return performCastlingMove(king, to);
         if (piece.moveTo(to)) {
             pieceAtTargetMove.ifPresent(this::capturePiece);
             nextTurn();
@@ -135,12 +137,28 @@ public class Board {
         return false;
     }
 
+    private boolean performCastlingMove(King king, Position to) {
+        boolean kingSide = to.file() == 'g';
+        Position rookSource = Position.of((kingSide ? 'H' : 'A'), king.getPosition().rank());
+        Position rookTarget = Position.of((kingSide ? 'F' : 'D'), king.getPosition().rank());
+        return findPieceAt(rookSource)
+                .map(Rook.class::cast).filter(rook -> rook.getColor() == king.getColor())
+                .filter(not(Rook::hasMoved))
+                .map(rook -> {
+                    rook.moveTo(rookTarget);
+                    king.moveTo(to);
+                    nextTurn();
+                    return true;
+                }).orElse(false);
+    }
+
     public Color getTurn() {
         return turn;
     }
 
     private void nextTurn() {
         turn = turn.opposite();
+        printDebugState();
     }
 
     private void printDebugState() {
