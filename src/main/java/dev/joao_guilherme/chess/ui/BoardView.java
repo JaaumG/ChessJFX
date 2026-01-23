@@ -2,6 +2,7 @@ package dev.joao_guilherme.chess.ui;
 
 import dev.joao_guilherme.chess.board.Board;
 import dev.joao_guilherme.chess.board.Position;
+import dev.joao_guilherme.chess.enums.Color;
 import dev.joao_guilherme.chess.pieces.Piece;
 import javafx.scene.layout.GridPane;
 
@@ -50,10 +51,14 @@ public class BoardView extends GridPane {
     }
 
     public void performMove(Position origin, Position target) {
-        Board.getInstance().getPieceAt(origin).ifPresent(piece -> showAvailablePositions(piece, false));
+        Board.getInstance().findPieceAt(origin).ifPresent(piece -> showAvailablePositions(piece, false));
         if (Board.getInstance().movePiece(origin, target)) {
             squares.get(origin).getChildren().removeIf(PieceView.class::isInstance);
             refreshBoard();
         }
+    }
+
+    public Color getTurn() {
+        return Board.getInstance().getTurn();
     }
 }
