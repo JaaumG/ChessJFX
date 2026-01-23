@@ -17,7 +17,7 @@ public class PositionView extends StackPane {
     public PositionView(Position position) {
         Rectangle rectangle = new Rectangle(TILE_SIZE, TILE_SIZE);
         rectangle.setUserData(position);
-        rectangle.setFill(Paint.valueOf((position.getRow() + position.getColumn()) % 2 == 0 ? COR_CLARO : COR_ESCURO));
+        rectangle.setFill(Paint.valueOf((position.getRow() + position.getColumn()) % 2 == 0 ? COR_ESCURO : COR_CLARO));
         this.getChildren().add(rectangle);
         this.setOnDragOver(event -> {
             if (event.getGestureSource() != this && event.getDragboard().hasString()) {
