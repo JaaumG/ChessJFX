@@ -21,10 +21,12 @@ public abstract sealed class Piece permits Bishop, King, Knight, Queen, Pawn, Ro
 
     public abstract boolean isValidMove(Position newPosition);
 
-    public void moveTo(Position newPosition) {
+    public boolean moveTo(Position newPosition) {
         if (isValidMove(newPosition)) {
             this.position = newPosition;
+            return true;
         }
+        return false;
     }
 
     public Color getColor() {
