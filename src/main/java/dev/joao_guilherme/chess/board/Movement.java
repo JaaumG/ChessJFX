@@ -71,7 +71,11 @@ public abstract class Movement {
 
     public static boolean isUpward(Position from, Position to, Color color) {
         if (to == null || from == null || from.equals(to)) return false;
-        return (color == Color.WHITE ? to.getRow() > from.getRow() : to.getRow() < from.getRow()) && to.getColumn() == from.getColumn();
+        return (color == Color.WHITE ? to.getRow() > from.getRow() : to.getRow() < from.getRow());
+    }
+
+    public static boolean isOnSameColumn(Position from, Position to) {
+        return from.getColumn() == to.getColumn();
     }
 
     public static int distance(Position from, Position to) {
@@ -91,10 +95,10 @@ public abstract class Movement {
         return noPieceAtTarget(to);
     }
 
-    public static boolean isEnPassant(Position from, Position to) {
+    public static boolean isEnPassant(Position from, Position to, Color color) {
         if (to == null || from == null || from.equals(to)) return false;
         if (!isDiagonal(from, to)) return false;
         if (distance(from, to) != 2) return false;
-        return noPieceAtTarget(to);
+        return noPieceAtTarget(to) && isUpward(from, to, color);
     }
 }
