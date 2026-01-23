@@ -147,4 +147,22 @@ public class Board {
     private void nextTurn() {
         turn = turn.opposite();
     }
+
+    private void printDebugState() {
+        System.out.println("Turn: " + turn);
+        for (int row = 0; row < 8; row++) {
+            for (int col = 0; col < 8; col++) {
+                Position pos = positions[row][col];
+                Optional<Piece> pieceOpt = findPieceAt(pos);
+                if (pieceOpt.isPresent()) {
+                    Piece piece = pieceOpt.get();
+                    System.out.print(piece.getName().charAt(0));
+                    System.out.print(piece.getColor() == WHITE ? "W " : "B ");
+                } else {
+                    System.out.print("-- ");
+                }
+            }
+            System.out.println();
+        }
+    }
 }
