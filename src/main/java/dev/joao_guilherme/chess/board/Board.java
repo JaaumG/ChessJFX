@@ -85,15 +85,6 @@ public class Board {
         return pieces.get(color.opposite()).stream().anyMatch(piece -> piece.isValidMove(king.getPosition()));
     }
 
-    public boolean isPiecePreventingCheck(Piece piece) {
-        if (piece == null || !pieces.get(piece.getColor()).contains(piece)) return false;
-        if (piece instanceof King) return false;
-        pieces.get(piece.getColor()).remove(piece);
-        boolean kingInCheck = isKingInCheck(piece.getColor());
-        pieces.get(piece.getColor()).add(piece);
-        return kingInCheck;
-    }
-
     public boolean isPieceMovementPreventingCheck(Piece piece, Position to) {
         if (piece == null || !pieces.get(piece.getColor()).contains(piece) || !piece.isValidMove(to)) return false;
         Position original = piece.getPosition();
