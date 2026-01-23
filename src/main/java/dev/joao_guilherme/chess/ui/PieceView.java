@@ -16,13 +16,17 @@ public class PieceView extends ImageView {
     public PieceView(Piece piece) {
         try {
             Image image = new Image(Objects.requireNonNull(getClass().getResourceAsStream(piece.getSymbolPath())));
-            this.setUserData(piece);
-            this.setImage(image);
-            this.setFitWidth(PIECE_SIZE);
-            this.setFitHeight(PIECE_SIZE);
-            this.setPreserveRatio(true);
-            this.setSmooth(true);
-            this.setOnDragDetected(event -> {
+            setUserData(piece);
+            setImage(image);
+            setFitWidth(PIECE_SIZE);
+            setFitHeight(PIECE_SIZE);
+            setPreserveRatio(true);
+            setSmooth(true);
+            setOnDragDetected(event -> {
+                if (!BoardView.getInstance().getTurn().equals(piece.getColor())) {
+                    event.consume();
+                    return;
+                }
                 Dragboard db = startDragAndDrop(TransferMode.MOVE);
                 ClipboardContent content = new ClipboardContent();
                 content.putString(piece.getPosition().toString());
@@ -33,7 +37,7 @@ public class PieceView extends ImageView {
                 BoardView.getInstance().showAvailablePositions(piece, true);
                 event.consume();
             });
-            this.setOnDragDone(event -> {
+            setOnDragDone(event -> {
                 BoardView.getInstance().showAvailablePositions(piece, false);
                 event.consume();
             });
