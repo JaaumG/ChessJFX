@@ -81,15 +81,13 @@ public class Board {
     }
 
     public boolean isCheckMate(Color color) {
-        if (isKingInCheck(color)) {
-            for (Piece piece : pieces.get(color)) {
-                if (!getPositionsAvailableForPiece(piece).isEmpty()) {
-                    return false;
-                }
+        if (!isKingInCheck(color)) return false;
+        for (Piece piece : pieces.get(color)) {
+            if (!getPositionsAvailableForPiece(piece).isEmpty()) {
+                return false;
             }
-            return true;
         }
-        return false;
+        return true;
     }
 
     public boolean isKingInCheck(Color color) {
@@ -227,7 +225,7 @@ public class Board {
         }
     }
 
-    public King findKing(Color turn) {
-        return pieces.get(turn).stream().filter(King.class::isInstance).map(King.class::cast).findFirst().orElseThrow(() -> new IllegalStateException(turn + " king not found"));
+    public King findKing(Color color) {
+        return pieces.get(color).stream().filter(King.class::isInstance).map(King.class::cast).findFirst().orElseThrow(() -> new IllegalStateException(color + " king not found"));
     }
 }
