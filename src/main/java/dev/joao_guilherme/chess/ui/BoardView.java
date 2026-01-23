@@ -43,9 +43,9 @@ public class BoardView extends GridPane {
     }
 
     public void refreshBoard() {
+        squares.forEach((_, positionView) -> positionView.getChildren().removeIf(PieceView.class::isInstance));
         Board.getInstance().getPieces().forEach(piece -> {
             PositionView stackPane = squares.get(piece.getPosition());
-            stackPane.getChildren().removeIf(PieceView.class::isInstance);
             stackPane.getChildren().add(new PieceView(piece));
         });
     }
