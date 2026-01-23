@@ -1,8 +1,9 @@
 package dev.joao_guilherme.chess.pieces;
 
-import dev.joao_guilherme.chess.board.Movement;
 import dev.joao_guilherme.chess.board.Position;
 import dev.joao_guilherme.chess.enums.Color;
+
+import static dev.joao_guilherme.chess.board.Movement.*;
 
 public final class Pawn extends Piece {
 
@@ -17,8 +18,9 @@ public final class Pawn extends Piece {
 
     @Override
     public boolean isValidMove(Position newPosition) {
-        return Movement.isUpward(this.position, newPosition, this.color)
-                && Movement.distance(this.position, newPosition) <= (isFirstMove() ? FIRST_MOVE_DISTANCE : SECOND_MOVE_DISTANCE);
+        return isUpward(this.position, newPosition, this.color)
+               && distance(this.position, newPosition) <= (isFirstMove() ? FIRST_MOVE_DISTANCE : SECOND_MOVE_DISTANCE)
+               && noPieceAtTarget(newPosition);
     }
 
     private boolean isFirstMove() {
