@@ -119,7 +119,8 @@ public class Board {
     }
 
     public List<Position> getPositionsAvailableForPiece(Piece piece) {
-        return getPositions().stream().filter(piece::isValidMove).toList();
+        return getPositions().stream().filter(piece::isValidMove)
+                .filter(position -> !(piece instanceof King king) || isSafePositionForKing(king, position)).toList();
     }
 
     public boolean movePiece(Position from, Position to) {
