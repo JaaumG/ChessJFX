@@ -88,7 +88,6 @@ public abstract class Movement {
         if (to == null || from == null || from.equals(to)) return false;
         if (!isSideways(from, to)) return false;
         if (distance(from, to) != 2) return false;
-        if (!noPieceAtTarget(to)) return false;
-        return noPieceInBetweenStraight(from, to);
+        return noPieceAtTarget(to);
     }
 }
