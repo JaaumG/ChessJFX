@@ -70,45 +70,8 @@ public abstract class Movement {
     }
 
     public static boolean isUpward(Position from, Position to, Color color) {
-        Board board = Board.getInstance();
-
-        int direction = (color == Color.WHITE) ? 1 : -1;
-
-        int fromRow = from.getRow();
-        int toRow = to.getRow();
-        int fromCol = from.getColumn();
-        int toCol = to.getColumn();
-
-        int rowDiff = toRow - fromRow;
-        int colDiff = Math.abs(toCol - fromCol);
-
-        var pieceAtTo = board.getPieceAt(to);
-
-        // 1) Movimento simples (1 casa para frente, sem captura)
-        if (colDiff == 0 && rowDiff == direction) {
-            return pieceAtTo.isEmpty() && noPieceInBetweenStraight(from, to) && noSameColorPieceAtTarget(color, to);
-        }
-
-        // 2) Movimento duplo inicial (2 casas)
-        if (colDiff == 0 && rowDiff == 2 * direction) {
-            boolean isWhiteInitial = color == Color.WHITE && fromRow == 2;
-            boolean isBlackInitial = color == Color.BLACK && fromRow == 7;
-            boolean inInitialRank = isWhiteInitial || isBlackInitial;
-
-            return inInitialRank
-                    && pieceAtTo.isEmpty()
-                    && noPieceInBetweenStraight(from, to)
-                    && noSameColorPieceAtTarget(color, to);
-        }
-
-        // 3) Captura na diagonal (1 casa diagonal, peça adversária obrigatória)
-        if (colDiff == 1 && rowDiff == direction) {
-            return pieceAtTo
-                    .map(targetPiece -> targetPiece.isNotSameColor(color))
-                    .orElse(false);
-        }
-
-        return false;
+        if (to == null || from == null || from.equals(to)) return false;
+        return (color == Color.WHITE ? to.getRow() > from.getRow() : to.getRow() < from.getRow()) && to.getColumn() == from.getColumn();
     }
 
     public static int distance(Position from, Position to) {
