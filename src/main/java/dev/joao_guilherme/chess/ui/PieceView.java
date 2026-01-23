@@ -15,7 +15,7 @@ public class PieceView extends ImageView {
 
     public PieceView(Piece piece) {
         try {
-            Image image = new Image(Objects.requireNonNull(getClass().getResourceAsStream(piece.getSymbolPath())));
+            Image image = new Image(Objects.requireNonNull(getClass().getResourceAsStream(piece.getIconPath())));
             setUserData(piece);
             setImage(image);
             setFitWidth(PIECE_SIZE);
@@ -42,7 +42,7 @@ public class PieceView extends ImageView {
                 event.consume();
             });
         } catch (NullPointerException _) {
-            System.err.println("Imagem não encontrada: " + piece.getSymbolPath());
+            System.err.println("Imagem não encontrada: " + piece.getIconPath());
         }
     }
 }

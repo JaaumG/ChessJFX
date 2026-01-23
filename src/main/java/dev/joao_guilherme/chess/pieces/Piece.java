@@ -9,7 +9,7 @@ public abstract sealed class Piece permits Bishop, King, Knight, Queen, Pawn, Ro
 
     final Color color;
     final String name;
-    final String symbolPath;
+    final String iconPath;
     Position position;
     boolean hasMoved = false;
 
@@ -17,7 +17,7 @@ public abstract sealed class Piece permits Bishop, King, Knight, Queen, Pawn, Ro
         this.color = color;
         this.name = name;
         this.position = position;
-        this.symbolPath = "/pieces/%s-%s.png".formatted(name, color.name().toLowerCase().charAt(0));
+        this.iconPath = "/pieces/%s-%s.png".formatted(name, color.name().toLowerCase().charAt(0));
     }
 
     public abstract boolean isValidMove(Position newPosition);
@@ -39,8 +39,8 @@ public abstract sealed class Piece permits Bishop, King, Knight, Queen, Pawn, Ro
         return name;
     }
 
-    public String getSymbolPath() {
-        return symbolPath;
+    public String getIconPath() {
+        return iconPath;
     }
 
     public Position getPosition() {
