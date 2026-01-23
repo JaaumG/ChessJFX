@@ -80,20 +80,37 @@ public class Board {
     }
 
     public boolean isKingInCheck(Color color) {
-        King king = pieces.get(color).stream().filter(King.class::isInstance).map(King.class::cast).findFirst().orElseThrow(() -> new IllegalStateException("White king not found"));
+        King king = pieces.get(color).stream().filter(King.class::isInstance).map(King.class::cast).findFirst().orElseThrow(() -> new IllegalStateException(color.name() + " king not found"));
         return pieces.get(color.opposite()).stream().anyMatch(piece -> piece.isValidMove(king.getPosition()));
     }
 
     public boolean isPiecePreventingCheck(Piece piece) {
         if (piece == null || !pieces.get(piece.getColor()).contains(piece)) return false;
+        if (piece instanceof King) return false;
         pieces.get(piece.getColor()).remove(piece);
         boolean kingInCheck = isKingInCheck(piece.getColor());
         pieces.get(piece.getColor()).add(piece);
         return kingInCheck;
     }
 
-    public boolean isSafePositionForKing(King king, Position position) {
-        return pieces.get(king.getColor().opposite()).stream().noneMatch(piece -> piece.isValidMove(position));
+    public boolean isPieceMovementPreventingCheck(Piece piece, Position to) {
+        if (piece == null || !pieces.get(piece.getColor()).contains(piece) || !piece.isValidMove(to)) return false;
+        Position original = piece.getPosition();
+
+        Optional<Piece> target = findPieceAt(to);
+        target.ifPresent(t -> pieces.get(t.getColor()).remove(t));
+
+        piece.setPosition(to);
+        boolean kingInCheck = isKingInCheck(piece.getColor());
+
+        piece.setPosition(original);
+        target.ifPresent(t -> pieces.get(t.getColor()).add(t));
+
+        return !kingInCheck;
+    }
+
+    public boolean isNotSafePositionForKing(King king, Position position) {
+        return pieces.get(king.getColor().opposite()).stream().anyMatch(piece -> piece.isValidMove(position));
     }
 
     public Piece getPieceAt(Position position) {
@@ -124,18 +141,28 @@ public class Board {
         return getPositions().stream().filter(piece::isValidMove)
                 .filter(position -> {
                     if (piece instanceof King king) {
-                        if (!isSafePositionForKing(king, position)) return false;
+                        if (isNotSafePositionForKing(king, position)) return false;
                         return !isCastling(king.getPosition(), position) || !getRookForCastling(king, position).map(Piece::hasMoved).orElse(true);
                     }
                     return true;
-                }).toList();
+                })
+                .filter(position -> {
+                    if (isKingInCheck(piece.getColor())) return isPieceMovementPreventingCheck(piece, position);
+                    return !isPiecePreventingCheck(piece) || isPieceMovementPreventingCheck(piece, position);
+                })
+                .toList();
     }
 
     public boolean movePiece(Position from, Position to) {
         Piece piece = getPieceAt(from);
         if (piece.getColor() != turn) return false;
         Optional<Piece> pieceAtTargetMove = findPieceAt(to);
-        if (piece instanceof King king && isCastling(from, to)) return performCastlingMove(king, to);
+        if (piece instanceof King king) {
+            if (isNotSafePositionForKing(king, to)) return false;
+            if (isCastling(from, to)) return performCastlingMove(king, to);
+        }
+        if (isKingInCheck(turn) && !isPieceMovementPreventingCheck(piece, to)) return false;
+        if (!isKingInCheck(turn) && !(!isPiecePreventingCheck(piece) || isPieceMovementPreventingCheck(piece, to))) return false;
         if (piece.moveTo(to)) {
             pieceAtTargetMove.ifPresent(this::capturePiece);
             nextTurn();
