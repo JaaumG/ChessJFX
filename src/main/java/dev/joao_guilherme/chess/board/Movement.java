@@ -90,4 +90,11 @@ public abstract class Movement {
         if (distance(from, to) != 2) return false;
         return noPieceAtTarget(to);
     }
+
+    public static boolean isEnPassant(Position from, Position to) {
+        if (to == null || from == null || from.equals(to)) return false;
+        if (!isDiagonal(from, to)) return false;
+        if (distance(from, to) != 2) return false;
+        return noPieceAtTarget(to);
+    }
 }
