@@ -72,7 +72,7 @@ public final class Position {
     private final int rank;
 
     public Position(char file, int rank) {
-        this.file = file;
+        this.file = Character.toLowerCase(file);
         this.rank = rank;
     }
 
