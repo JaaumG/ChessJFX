@@ -94,7 +94,11 @@ public class Board {
         return pieces.get(king.getColor().opposite()).stream().anyMatch(piece -> piece.isValidMove(position));
     }
 
-    public Optional<Piece> getPieceAt(Position position) {
+    public Piece getPieceAt(Position position) {
+        return findPieceAt(position).orElseThrow(() -> new IllegalArgumentException("No piece at " + position));
+    }
+
+    public Optional<Piece> findPieceAt(Position position) {
         return pieces.values().stream()
                 .flatMap(Set::stream)
                 .filter(piece -> piece.getPosition().equals(position))
