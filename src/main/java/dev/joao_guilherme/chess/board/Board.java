@@ -156,7 +156,7 @@ public class Board {
         }
         return pos -> {
             if (isNotSafePositionForKing(king, pos)) return false;
-            if (isCastling(king.getPosition(), pos)) return getRookForCastling(king, pos).filter(r -> !r.hasMoved()).isPresent();
+            if (isCastling(king.getPosition(), pos)) return getRookForCastling(king, pos).filter(r -> !r.hasMoved()).isPresent() && !isKingInCheck(king.getColor());
             return true;
         };
     }
