@@ -49,6 +49,13 @@ public class BoardView extends GridPane {
             stackPane.getChildren().add(new PieceView(piece));
         });
         validateForCheckmate();
+        rotateBoard();
+    }
+
+    private void rotateBoard() {
+        int rotation = getTurn().equals(Color.WHITE) ? 0 : 180;
+        setRotate(rotation);
+        squares.forEach((_, positionView) -> positionView.setRotate(rotation));
     }
 
     public void performMove(Position origin, Position target) {
