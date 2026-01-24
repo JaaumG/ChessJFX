@@ -114,7 +114,7 @@ public final class Position {
 
     @Override
     public String toString() {
-        return Character.toString(file).toUpperCase() + rank;
+        return Character.toString(file).toLowerCase() + rank;
     }
 
     public char file() {
