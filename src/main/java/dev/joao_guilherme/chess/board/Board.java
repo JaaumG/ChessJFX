@@ -1,11 +1,10 @@
 package dev.joao_guilherme.chess.board;
 
+import dev.joao_guilherme.chess.board.events.BoardEvents;
 import dev.joao_guilherme.chess.enums.Color;
 import dev.joao_guilherme.chess.pieces.*;
 
 import java.util.*;
-import java.util.function.Consumer;
-import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
@@ -16,9 +15,8 @@ import static dev.joao_guilherme.chess.enums.Color.WHITE;
 import static java.lang.Math.abs;
 import static java.util.function.Predicate.not;
 
-public class Board {
+public class Board extends BoardEvents {
 
-    private Position enPassantAvailablePosition;
     private final Position[][] positions = {
             {A8, B8, C8, D8, E8, F8, G8, H8},
             {A7, B7, C7, D7, E7, F7, G7, H7},
@@ -29,11 +27,9 @@ public class Board {
             {A2, B2, C2, D2, E2, F2, G2, H2},
             {A1, B1, C1, D1, E1, F1, G1, H1}
     };
+    private Position enPassantAvailablePosition;
     private Map<Color, Set<Piece>> pieces;
     private Color turn;
-    private Consumer<Piece> capturePieceEvent;
-    private Consumer<King> castlingEvent;
-    private Function<Piece, Class<? extends Piece>> promotionEvent;
 
     public Board() {
         setupInitialPositions();
@@ -340,29 +336,5 @@ public class Board {
 
     public King findKing(Color color) {
         return pieces.get(color).stream().filter(King.class::isInstance).map(King.class::cast).findFirst().orElseThrow(() -> new IllegalStateException(color + " king not found"));
-    }
-
-    public void addPieceCapturedEvent(Consumer<Piece> event) {
-        this.capturePieceEvent = event;
-    }
-
-    public void notifyPieceCaptured(Piece piece) {
-        capturePieceEvent.accept(piece);
-    }
-
-    public void addPromotionEvent(Function<Piece, Class<? extends Piece>> event) {
-        this.promotionEvent = event;
-    }
-
-    public Class<? extends Piece> notifyPiecePromoted(Piece piece) {
-        return promotionEvent.apply(piece);
-    }
-
-    public void addCastlingEvent(Consumer<King> event) {
-        this.castlingEvent = event;
-    }
-
-    public void notifyKingCastled(King king) {
-        castlingEvent.accept(king);
     }
 }
