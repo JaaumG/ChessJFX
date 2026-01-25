@@ -19,7 +19,6 @@ import static java.util.function.Predicate.not;
 public class Board {
 
     private Position enPassantAvailablePosition;
-    private static Board instance;
     private final Position[][] positions = {
             {A8, B8, C8, D8, E8, F8, G8, H8},
             {A7, B7, C7, D7, E7, F7, G7, H7},
@@ -36,16 +35,9 @@ public class Board {
     private Consumer<King> castlingEvent;
     private Function<Piece, Class<? extends Piece>> promotionEvent;
 
-    private Board() {
+    public Board() {
         setupInitialPositions();
         turn = WHITE;
-    }
-
-    public static Board getInstance() {
-        if (instance == null) {
-            instance = new Board();
-        }
-        return instance;
     }
 
     private void setupInitialPositions() {
