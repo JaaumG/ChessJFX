@@ -4,6 +4,8 @@ import dev.joao_guilherme.chess.enums.Color;
 import dev.joao_guilherme.chess.pieces.*;
 
 import java.util.*;
+import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
@@ -30,6 +32,8 @@ public class Board {
     };
     private Map<Color, Set<Piece>> pieces;
     private Color turn;
+    private Consumer<Piece> capturePieceEvent;
+    private Function<Piece, Class<? extends Piece>> promotionEvent;
 
     private Board() {
         setupInitialPositions();
@@ -296,5 +300,21 @@ public class Board {
 
     public King findKing(Color color) {
         return pieces.get(color).stream().filter(King.class::isInstance).map(King.class::cast).findFirst().orElseThrow(() -> new IllegalStateException(color + " king not found"));
+    }
+
+    public void addPieceCapturedEvent(Consumer<Piece> event) {
+        this.capturePieceEvent = event;
+    }
+
+    public void notifyPieceCaptured(Piece piece) {
+        capturePieceEvent.accept(piece);
+    }
+
+    public void addPromotionEvent(Function<Piece, Class<? extends Piece>> event) {
+        this.promotionEvent = event;
+    }
+
+    public Class<? extends Piece> notifyPiecePromoted(Piece piece) {
+        return promotionEvent.apply(piece);
     }
 }
