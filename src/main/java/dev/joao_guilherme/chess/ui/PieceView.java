@@ -35,11 +35,13 @@ public class PieceView extends ImageView {
                 double offsetX = image.getWidth() / 2;
                 double offsetY = image.getHeight() / 2;
                 db.setDragView(image, offsetX, offsetY);
+                setVisible(false);
                 BoardView.getInstance().showAvailablePositions(piece, true);
                 event.consume();
             });
             setOnDragDone(event -> {
                 BoardView.getInstance().showAvailablePositions(piece, false);
+                setVisible(true);
                 event.consume();
             });
         } catch (NullPointerException _) {
