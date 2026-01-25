@@ -169,7 +169,7 @@ public class Board {
     }
 
     private boolean isMoveAllowed(Piece piece, Position to) {
-        return !isKingInCheck(piece.getColor()) || isPieceMovementAvoidingCheck(piece, to);
+        return isPieceMovementAvoidingCheck(piece, to);
     }
 
     private Predicate<Position> isValidMovementForKing(Piece piece) {
@@ -245,15 +245,10 @@ public class Board {
     }
 
     private Optional<Pawn> getPawnForEnPassant(Pawn pawn, Position to) {
-        Position enemyPos = Position.of(to.file(), pawn.getPosition().rank());
-
-        Optional<Piece> enemy = findPieceAt(enemyPos);
-
-        if (enemy.isPresent() && enemy.get() instanceof Pawn enemyPawn && enPassantAvailablePosition.isPresent() && enPassantAvailablePosition.get().equals(to)) {
-            return Optional.of(enemyPawn);
-        }
-
-        return Optional.empty();
+        return findPieceAt(Position.of(to.file(), pawn.getPosition().rank()))
+                .filter(Pawn.class::isInstance)
+                .map(Pawn.class::cast)
+                .filter(_ -> enPassantAvailablePosition.isPresent() && enPassantAvailablePosition.get().equals(to));
     }
 
     private Optional<Rook> getRookForCastling(King king, Position to) {
