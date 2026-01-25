@@ -5,47 +5,6 @@ import dev.joao_guilherme.chess.enums.Color;
 
 public abstract class Movement {
 
-    public static boolean noPieceInBetween(Position from, Position to) {
-        return isDiagonal(from, to) ? noPieceInBetweenDiagonal(from, to) : noPieceInBetweenStraight(from, to);
-    }
-
-    private static boolean noPieceInBetweenDiagonal(Position from, Position to) {
-        return isDiagonal(from, to) && noPieceInBetween(from, to, true);
-    }
-
-    private static boolean noPieceInBetweenStraight(Position from, Position to) {
-        return isStraight(from, to) && noPieceInBetween(from, to, false);
-    }
-
-    private static boolean noPieceInBetween(Position from, Position to, boolean diagonal) {
-        if (isMovementInvalid(from, to)) return false;
-        int rowDir = Integer.signum(to.getRow() - from.getRow());
-        int colDir = Integer.signum(to.getColumn() - from.getColumn());
-        int currentRow = from.getRow() + rowDir;
-        int currentCol = from.getColumn() + colDir;
-
-        while (currentRow != to.getRow() || currentCol != to.getColumn()) {
-            if (diagonal && Math.abs(currentRow - from.getRow()) != Math.abs(currentCol - from.getColumn())) break;
-            Position pos = new Position(currentCol, currentRow);
-            boolean hasPieceSameColor = Board.getInstance()
-                    .findPieceAt(pos)
-                    .map(piece -> piece.isSameColor(Board.getInstance().getPieceAt(from)))
-                    .isPresent();
-            if (hasPieceSameColor) return false;
-            currentRow += rowDir;
-            currentCol += colDir;
-        }
-        return true;
-    }
-
-    public static boolean noSameColorPieceAtTarget(Color color, Position to) {
-        return Board.getInstance().findPieceAt(to).map(piece -> piece.isNotSameColor(color)).orElse(true);
-    }
-
-    public static boolean noPieceAtTarget(Position to) {
-        return Board.getInstance().findPieceAt(to).isEmpty();
-    }
-
     public static boolean isDiagonal(Position from, Position to) {
         if (isMovementInvalid(from, to)) return false;
         return Math.abs(from.getColumn() - to.getColumn()) == Math.abs(from.getRow() - to.getRow());
@@ -85,15 +44,14 @@ public abstract class Movement {
     public static boolean isCastling(Position from, Position to) {
         if (isMovementInvalid(from, to)) return false;
         if (!isSideways(from, to)) return false;
-        if (distance(from, to) != 2) return false;
-        return noPieceAtTarget(to);
+        return distance(from, to) == 2;
     }
 
     public static boolean isEnPassant(Position from, Position to, Color color) {
         if (isMovementInvalid(from, to)) return false;
         if (!isDiagonal(from, to)) return false;
         if (distance(from, to) != 2) return false;
-        return noPieceAtTarget(to) && isUpward(from, to, color);
+        return isUpward(from, to, color);
     }
 
     private static boolean isMovementInvalid(Position from, Position to) {
