@@ -258,7 +258,9 @@ public class Board {
 
     private Optional<Rook> getRookForCastling(King king, Position to) {
         boolean kingSide = to.file() == 'g';
-        return findPieceAt(Position.of((kingSide ? 'H' : 'A'), king.getPosition().rank())).map(Rook.class::cast)
+        return findPieceAt(Position.of((kingSide ? 'H' : 'A'), king.getPosition().rank()))
+                .filter(Rook.class::isInstance)
+                .map(Rook.class::cast)
                 .filter(rook -> rook.getColor() == king.getColor())
                 .filter(rook -> noPieceInBetween(king.getPosition(), rook.getPosition()));
     }
