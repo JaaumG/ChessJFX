@@ -155,7 +155,9 @@ public class Board {
     }
 
     public void capturePiece(Piece piece) {
-        pieces.get(piece.getColor()).remove(piece);
+        if (pieces.get(piece.getColor()).remove(piece)) {
+            notifyPieceCaptured(piece);
+        }
     }
 
     public Set<Piece> getPieces() {
