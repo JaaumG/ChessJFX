@@ -100,12 +100,16 @@ public class Board {
         return !isKingInCheck(color) && pieces.get(color).stream().allMatch(piece -> getPositionsAvailableForPiece(piece).isEmpty());
     }
 
-    public <T extends Piece> Piece promote(Pawn pawn, Class<T> tClass) {
-        pieces.get(pawn.getColor()).remove(pawn);
+    public boolean promote(Pawn pawn, Position promotionPosition) {
+        Class<? extends Piece> tClass = notifyPiecePromoted(pawn);
+        if (tClass == null) return false;
+        findPieceAt(promotionPosition).ifPresent(this::capturePiece);
         try {
-            Piece promotedPiece = tClass.getConstructor(Color.class, Position.class).newInstance(pawn.getColor(), pawn.getPosition());
+            Piece promotedPiece = tClass.getConstructor(Color.class, Position.class).newInstance(pawn.getColor(), promotionPosition);
             pieces.get(promotedPiece.getColor()).add(promotedPiece);
-            return promotedPiece;
+            pieces.get(pawn.getColor()).remove(pawn);
+            nextTurn();
+            return true;
         } catch (Exception e) {
             throw new IllegalArgumentException("Invalid piece class for promotion: " + tClass.getName(), e);
         }
@@ -214,7 +218,7 @@ public class Board {
             if (isPawnTwoRowFirstMove(from, to)) enPassantAvailablePosition = Optional.of(Position.of(from.file(), (from.rank() + to.rank()) / 2));
             else if (isEnPassant(from, to, pawn.getColor())) return performEnPassantMove(pawn, to);
             else enPassantAvailablePosition = Optional.empty();
-            if (to.rank() == (pawn.getColor() == WHITE ? 8 : 1)) piece = promote(pawn, Queen.class);
+            if (to.rank() == (pawn.getColor() == WHITE ? 8 : 1)) return promote(pawn, to);
         }
         if (piece.moveTo(to)) {
             target.ifPresent(this::capturePiece);
