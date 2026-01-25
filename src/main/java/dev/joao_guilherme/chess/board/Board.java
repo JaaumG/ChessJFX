@@ -91,6 +91,11 @@ public class Board {
         return true;
     }
 
+    //TODO 24/01/2026: - Identificar quando não for mais possivel fazer checkmate
+    public boolean isStaleMate(Color color) {
+        return !isKingInCheck(color) && pieces.get(color).stream().allMatch(piece -> getPositionsAvailableForPiece(piece).isEmpty());
+    }
+
     public <T extends Piece> Piece promote(Pawn pawn, Class<T> tClass) {
         pieces.get(pawn.getColor()).remove(pawn);
         try {
@@ -123,7 +128,7 @@ public class Board {
     }
 
     public boolean isNotSafePositionForKing(King king, Position position) {
-        return pieces.get(king.getColor().opposite()).stream().anyMatch(piece -> piece.isValidMove(position));
+        return pieces.get(king.getColor().opposite()).stream().anyMatch(piece -> piece.isValidMove(position) && (piece instanceof Pawn pawn && pawn.getPosition().file() != position.file()));
     }
 
     public boolean isPawnTwoRowFirstMove(Position from, Position to) {
