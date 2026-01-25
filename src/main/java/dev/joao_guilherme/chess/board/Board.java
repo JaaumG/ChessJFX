@@ -18,7 +18,7 @@ import static java.util.function.Predicate.not;
 
 public class Board {
 
-    private Optional<Position> enPassantAvailablePosition = Optional.empty();
+    private Position enPassantAvailablePosition;
     private static Board instance;
     private final Position[][] positions = {
             {A8, B8, C8, D8, E8, F8, G8, H8},
@@ -33,6 +33,7 @@ public class Board {
     private Map<Color, Set<Piece>> pieces;
     private Color turn;
     private Consumer<Piece> capturePieceEvent;
+    private Consumer<King> castlingEvent;
     private Function<Piece, Class<? extends Piece>> promotionEvent;
 
     private Board() {
@@ -199,8 +200,8 @@ public class Board {
         }
         return pos -> {
             if (isEnPassant(pawn.getPosition(), pos, pawn.getColor())) {
-                return enPassantAvailablePosition.isPresent()
-                        && enPassantAvailablePosition.get().equals(pos)
+                return enPassantAvailablePosition != null
+                        && enPassantAvailablePosition.equals(pos)
                         && getPawnForEnPassant(pawn, pos).isPresent();
             }
             return true;
@@ -217,9 +218,9 @@ public class Board {
         }
         else if (!isMoveAllowed(piece, to)) return false;
         if (piece instanceof Pawn pawn) {
-            if (isPawnTwoRowFirstMove(from, to)) enPassantAvailablePosition = Optional.of(Position.of(from.file(), (from.rank() + to.rank()) / 2));
+            if (isPawnTwoRowFirstMove(from, to)) enPassantAvailablePosition = Position.of(from.file(), (from.rank() + to.rank()) / 2);
             else if (isEnPassant(from, to, pawn.getColor())) return performEnPassantMove(pawn, to);
-            else enPassantAvailablePosition = Optional.empty();
+            else enPassantAvailablePosition = null;
             if (to.rank() == (pawn.getColor() == WHITE ? 8 : 1)) return promote(pawn, to);
         }
         if (piece.moveTo(to)) {
@@ -258,7 +259,7 @@ public class Board {
         return findPieceAt(Position.of(to.file(), pawn.getPosition().rank()))
                 .filter(Pawn.class::isInstance)
                 .map(Pawn.class::cast)
-                .filter(_ -> enPassantAvailablePosition.isPresent() && enPassantAvailablePosition.get().equals(to));
+                .filter(_ -> enPassantAvailablePosition != null && enPassantAvailablePosition.equals(to));
     }
 
     private Optional<Rook> getRookForCastling(King king, Position to) {
