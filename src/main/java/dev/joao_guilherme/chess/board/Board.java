@@ -91,6 +91,17 @@ public class Board {
         return true;
     }
 
+    public <T extends Piece> Piece promote(Pawn pawn, Class<T> tClass) {
+        pieces.get(pawn.getColor()).remove(pawn);
+        try {
+            Piece promotedPiece = tClass.getConstructor(Color.class, Position.class).newInstance(pawn.getColor(), pawn.getPosition());
+            pieces.get(promotedPiece.getColor()).add(promotedPiece);
+            return promotedPiece;
+        } catch (Exception e) {
+            throw new IllegalArgumentException("Invalid piece class for promotion: " + tClass.getName(), e);
+        }
+    }
+
     public boolean isKingInCheck(Color color) {
         return pieces.get(color.opposite()).stream().anyMatch(piece -> piece.isValidMove(findKing(color).getPosition()));
     }
