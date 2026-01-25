@@ -15,9 +15,11 @@ public class BoardView extends GridPane {
     private static BoardView instance;
 
     private final Map<Position, PositionView> squares = new HashMap<>();
+    private final Board board;
 
     private BoardView() {
-        for (Position position : Board.getInstance().getPositions()) {
+        board = new Board();
+        for (Position position : board.getPositions()) {
             PositionView positionView = new PositionView(position);
             squares.put(position, positionView);
             int visualRow = 8 - position.getRow();
@@ -29,7 +31,6 @@ public class BoardView extends GridPane {
         setWidth(8 * PositionView.TILE_SIZE);
         setHeight(8 * PositionView.TILE_SIZE);
 
-        Board board = Board.getInstance();
         board.addPieceCapturedEvent(piece -> {
             squares.get(piece.getPosition()).getChildren().removeIf(PieceView.class::isInstance);
             SoundPlayer.playCapture();
@@ -45,13 +46,13 @@ public class BoardView extends GridPane {
     }
 
     public void showAvailablePositions(Piece piece, boolean show) {
-        List<Position> positionsAvailableForPiece = Board.getInstance().getPositionsAvailableForPiece(piece);
+        List<Position> positionsAvailableForPiece = board.getPositionsAvailableForPiece(piece);
         squares.forEach((position, positionView) -> positionView.setHighlighted(positionsAvailableForPiece.contains(position) && show));
     }
 
     public void refreshBoard() {
         squares.forEach((_, positionView) -> positionView.getChildren().removeIf(PieceView.class::isInstance));
-        Board.getInstance().getPieces().forEach(piece -> {
+        board.getPieces().forEach(piece -> {
             PositionView stackPane = squares.get(piece.getPosition());
             stackPane.getChildren().add(new PieceView(piece));
         });
@@ -66,8 +67,8 @@ public class BoardView extends GridPane {
     }
 
     public void performMove(Position origin, Position target) {
-        Board.getInstance().findPieceAt(origin).ifPresent(piece -> showAvailablePositions(piece, false));
-        if (Board.getInstance().movePiece(origin, target)) {
+        board.findPieceAt(origin).ifPresent(piece -> showAvailablePositions(piece, false));
+        if (board.movePiece(origin, target)) {
             squares.get(origin).getChildren().removeIf(PieceView.class::isInstance);
             SoundPlayer.playMove();
             refreshBoard();
@@ -75,12 +76,12 @@ public class BoardView extends GridPane {
     }
 
     public Color getTurn() {
-        return Board.getInstance().getTurn();
+        return board.getTurn();
     }
 
     private void validateForCheckmate() {
-        if (Board.getInstance().isCheckMate(getTurn())) {
-            Position kingPosition = Board.getInstance().findKing(getTurn()).getPosition();
+        if (board.isCheckMate(getTurn())) {
+            Position kingPosition = board.findKing(getTurn()).getPosition();
             squares.get(kingPosition).getChildren().stream().filter(PieceView.class::isInstance)
                     .map(PieceView.class::cast)
                     .forEach(kingView -> {
