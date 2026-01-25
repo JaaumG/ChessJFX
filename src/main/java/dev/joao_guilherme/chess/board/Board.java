@@ -164,12 +164,12 @@ public class Board {
                 .filter(piece::isValidMove)
                 .filter(isValidMovementForKing(piece))
                 .filter(isValidMovementForPawn(piece))
-                .filter(to -> isSafeMove(piece, to))
+                .filter(to -> isMoveAllowed(piece, to))
                 .toList();
     }
 
-    private boolean isSafeMove(Piece piece, Position to) {
-        return isPieceMovementAvoidingCheck(piece, to);
+    private boolean isMoveAllowed(Piece piece, Position to) {
+        return !isKingInCheck(piece.getColor()) || isPieceMovementAvoidingCheck(piece, to);
     }
 
     private Predicate<Position> isValidMovementForKing(Piece piece) {
@@ -205,7 +205,7 @@ public class Board {
             if (isNotSafePositionForKing(king, to)) return false;
             if (isCastling(from, to)) return performCastlingMove(king, to);
         }
-        else if (!isSafeMove(piece, to)) return false;
+        else if (!isMoveAllowed(piece, to)) return false;
         if (piece instanceof Pawn pawn) {
             if (isPawnTwoRowFirstMove(from, to)) enPassantAvailablePosition = Optional.of(Position.of(from.file(), (from.rank() + to.rank()) / 2));
             else if (isEnPassant(from, to, pawn.getColor())) return performEnPassantMove(pawn, to);
@@ -235,7 +235,7 @@ public class Board {
 
     private boolean performEnPassantMove(Pawn pawn, Position to) {
         return getPawnForEnPassant(pawn, to)
-                .filter(_ -> isSafeMove(pawn, to))
+                .filter(_ -> isMoveAllowed(pawn, to))
                 .map(piece -> {
                     capturePiece(piece);
                     pawn.moveTo(to);
@@ -272,12 +272,11 @@ public class Board {
         Position rookTarget = Position.of((kingSide ? 'F' : 'D'), king.getPosition().rank());
         return getRookForCastling(king, to)
                 .filter(not(Rook::hasMoved))
-                .filter(_ -> isSafeMove(king, rookTarget)).isPresent();
+                .filter(_ -> isMoveAllowed(king, rookTarget)).isPresent();
     }
 
     private void nextTurn() {
         turn = turn.opposite();
-        printDebugState();
     }
 
     private void printDebugState() {
