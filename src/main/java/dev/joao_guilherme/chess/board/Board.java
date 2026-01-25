@@ -205,12 +205,13 @@ public class Board {
             if (isNotSafePositionForKing(king, to)) return false;
             if (isCastling(from, to)) return performCastlingMove(king, to);
         }
+        else if (!isSafeMove(piece, to)) return false;
         if (piece instanceof Pawn pawn) {
             if (isPawnTwoRowFirstMove(from, to)) enPassantAvailablePosition = Optional.of(Position.of(from.file(), (from.rank() + to.rank()) / 2));
             else if (isEnPassant(from, to, pawn.getColor())) return performEnPassantMove(pawn, to);
             else enPassantAvailablePosition = Optional.empty();
+            if (to.rank() == (pawn.getColor() == WHITE ? 8 : 1)) piece = promote(pawn, Queen.class);
         }
-        if (!isSafeMove(piece, to)) return false;
         if (piece.moveTo(to)) {
             target.ifPresent(this::capturePiece);
             nextTurn();
