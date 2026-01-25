@@ -60,10 +60,6 @@ public abstract sealed class Piece permits Bishop, King, Knight, Queen, Pawn, Ro
         return this.color == Objects.requireNonNull(piece).getColor();
     }
 
-    public boolean isNotSameColor(Piece piece) {
-        return !isSameColor(piece);
-    }
-
     public boolean isNotSameColor(Color color) {
         return !this.color.equals(color);
     }
@@ -76,5 +72,4 @@ public abstract sealed class Piece permits Bishop, King, Knight, Queen, Pawn, Ro
     public boolean hasMoved() {
         return moveCount > 0;
     }
-
 }
