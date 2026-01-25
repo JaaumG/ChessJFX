@@ -168,7 +168,16 @@ public class Board extends BoardEvents {
     }
 
     private boolean isMoveAllowed(Piece piece, Position to) {
-        return isPieceMovementAvoidingCheck(piece, to);
+        return piece.isValidMove(to) && noSameColorPieceAtTarget(piece.getColor(), to) && switch (piece) {
+            case Knight _ -> true;
+            case Pawn pawn -> {
+                if (isOnSameColumn(pawn.getPosition(), to)) yield noPieceAtTarget(to);
+                else if (isEnPassant(pawn.getPosition(), to, pawn.getColor())) yield noPieceAtTarget(to);
+                else yield !noPieceAtTarget(to);
+            }
+            case King _ -> (!isCastling(piece.getPosition(), to) || noPieceAtTarget(to)) && noPieceInBetween(piece.getPosition(), to);
+            default -> noPieceInBetween(piece.getPosition(), to);
+        };
     }
 
     private Predicate<Position> isValidMovementForKing(Piece piece) {
