@@ -162,13 +162,7 @@ public class Board {
         }
         return pos -> {
             if (isNotSafePositionForKing(king, pos)) return false;
-            if (isCastling(king.getPosition(), pos)) {
-                boolean kingSide = pos.file() == 'g';
-                Position rookTarget = Position.of((kingSide ? 'F' : 'D'), king.getPosition().rank());
-                return getRookForCastling(king, pos)
-                        .filter(not(Rook::hasMoved))
-                        .filter(_ -> isSafeMove(king, rookTarget)).isPresent();
-            }
+            if (isCastling(king.getPosition(), pos)) return isCastlingAllowed(king, pos);
             return true;
         };
     }
@@ -213,8 +207,7 @@ public class Board {
         boolean kingSide = to.file() == 'g';
         Position rookTarget = Position.of((kingSide ? 'F' : 'D'), king.getPosition().rank());
         return getRookForCastling(king, to)
-                .filter(not(Rook::hasMoved))
-                .filter(_ -> isSafeMove(king, rookTarget))
+                .filter(_ -> isCastlingAllowed(king, to))
                 .map(rook -> {
                     rook.moveTo(rookTarget);
                     king.moveTo(to);
@@ -255,6 +248,14 @@ public class Board {
 
     public Color getTurn() {
         return turn;
+    }
+
+    private boolean isCastlingAllowed(King king, Position to) {
+        boolean kingSide = to.file() == 'g';
+        Position rookTarget = Position.of((kingSide ? 'F' : 'D'), king.getPosition().rank());
+        return getRookForCastling(king, to)
+                .filter(not(Rook::hasMoved))
+                .filter(_ -> isSafeMove(king, rookTarget)).isPresent();
     }
 
     private void nextTurn() {
