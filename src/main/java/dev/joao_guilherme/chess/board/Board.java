@@ -8,7 +8,10 @@ import java.util.*;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
-import static dev.joao_guilherme.chess.board.Movement.*;
+import static dev.joao_guilherme.chess.board.Movement.isCastling;
+import static dev.joao_guilherme.chess.board.Movement.isDiagonal;
+import static dev.joao_guilherme.chess.board.Movement.isOnSameColumn;
+import static dev.joao_guilherme.chess.board.Movement.isStraight;
 import static dev.joao_guilherme.chess.board.Position.*;
 import static dev.joao_guilherme.chess.enums.Color.BLACK;
 import static dev.joao_guilherme.chess.enums.Color.WHITE;
@@ -341,6 +344,10 @@ public class Board extends BoardEvents {
 
     public boolean noPieceAtTarget(Position to) {
         return findPieceAt(to).isEmpty();
+    }
+
+    public boolean isEnPassant(Position from, Position to, Color color) {
+        return Movement.isEnPassant(from, to, color) && enPassantAvailablePosition != null && enPassantAvailablePosition.equals(to);
     }
 
     public King findKing(Color color) {
