@@ -4,7 +4,6 @@ import dev.joao_guilherme.chess.board.Position;
 import dev.joao_guilherme.chess.enums.Color;
 
 import static dev.joao_guilherme.chess.board.Movement.isLShaped;
-import static dev.joao_guilherme.chess.board.Movement.noSameColorPieceAtTarget;
 
 public final class Knight extends Piece {
 
@@ -14,6 +13,6 @@ public final class Knight extends Piece {
 
     @Override
     public boolean isValidMove(Position newPosition) {
-        return isLShaped(this.position, newPosition) && noSameColorPieceAtTarget(this.color, newPosition);
+        return isLShaped(this.position, newPosition);
     }
 }

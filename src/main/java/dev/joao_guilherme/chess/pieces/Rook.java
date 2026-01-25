@@ -13,6 +13,6 @@ public final class Rook extends Piece {
 
     @Override
     public boolean isValidMove(Position newPosition) {
-        return isStraight(this.position, newPosition) && noPieceInBetween(this.position, newPosition) && noSameColorPieceAtTarget(this.color, newPosition);
+        return isStraight(this.position, newPosition);
     }
 }

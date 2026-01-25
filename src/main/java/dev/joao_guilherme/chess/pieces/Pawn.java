@@ -16,15 +16,12 @@ public final class Pawn extends Piece {
 
     @Override
     public boolean isValidMove(Position newPosition) {
-        boolean basicsMovements = (isUpward(this.position, newPosition, this.color)
-                && isOnSameColumn(this.position, newPosition)
-                && distance(this.position, newPosition) <= (hasMoved() ? SECOND_MOVE_DISTANCE : FIRST_MOVE_DISTANCE)
-                && noPieceAtTarget(newPosition));
+        boolean basicsMovements = isOnSameColumn(this.position, newPosition)
+                && distance(this.position, newPosition) <= (hasMoved() ? SECOND_MOVE_DISTANCE : FIRST_MOVE_DISTANCE);
 
-        boolean diagonalCapture = (isDiagonal(this.position, newPosition) && distance(this.position, newPosition) == 2
-                && isUpward(this.position, newPosition, this.color)
-                && noSameColorPieceAtTarget(this.color, newPosition) && !noPieceAtTarget(newPosition));
+        boolean diagonalCapture = isDiagonal(this.position, newPosition)
+                && distance(this.position, newPosition) == 2;
 
-        return basicsMovements || diagonalCapture || isEnPassant(this.position, newPosition, this.color);
+        return isUpward(this.position, newPosition, this.color) && (basicsMovements || diagonalCapture || isEnPassant(this.position, newPosition, this.color));
     }
 }

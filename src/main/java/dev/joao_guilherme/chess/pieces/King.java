@@ -14,6 +14,6 @@ public final class King extends Piece {
     @Override
     public boolean isValidMove(Position newPosition) {
         boolean basicMovement = (isStraight(this.position, newPosition) && distance(this.position, newPosition) == 1) || (isDiagonal(this.position, newPosition) && distance(this.position, newPosition) == 2);
-        return (noSameColorPieceAtTarget(this.color, newPosition) && basicMovement && noPieceInBetween(this.position, newPosition)) || (isCastling(this.position, newPosition) && !hasMoved());
+        return basicMovement || (isCastling(this.position, newPosition) && !hasMoved());
     }
 }

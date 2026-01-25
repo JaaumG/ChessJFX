@@ -13,6 +13,6 @@ public final class Bishop extends Piece {
 
     @Override
     public boolean isValidMove(Position newPosition) {
-        return isDiagonal(this.position, newPosition) && noPieceInBetween(this.position, newPosition) && noSameColorPieceAtTarget(this.color, newPosition);
+        return isDiagonal(this.position, newPosition);
     }
 }
