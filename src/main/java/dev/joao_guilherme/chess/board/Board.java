@@ -239,6 +239,7 @@ public class Board {
                 .map(rook -> {
                     rook.moveTo(rookTarget);
                     king.moveTo(to);
+                    notifyKingCastled(king);
                     nextTurn();
                     return true;
                 }).orElse(false);
@@ -323,5 +324,13 @@ public class Board {
 
     public Class<? extends Piece> notifyPiecePromoted(Piece piece) {
         return promotionEvent.apply(piece);
+    }
+
+    public void addCastlingEvent(Consumer<King> event) {
+        this.castlingEvent = event;
+    }
+
+    public void notifyKingCastled(King king) {
+        castlingEvent.accept(king);
     }
 }
