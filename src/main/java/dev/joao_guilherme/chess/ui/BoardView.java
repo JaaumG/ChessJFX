@@ -3,7 +3,7 @@ package dev.joao_guilherme.chess.ui;
 import dev.joao_guilherme.chess.board.Board;
 import dev.joao_guilherme.chess.board.Position;
 import dev.joao_guilherme.chess.enums.Color;
-import dev.joao_guilherme.chess.pieces.Piece;
+import dev.joao_guilherme.chess.pieces.*;
 import javafx.scene.layout.GridPane;
 
 import java.util.HashMap;
@@ -28,6 +28,13 @@ public class BoardView extends GridPane {
 
         setWidth(8 * PositionView.TILE_SIZE);
         setHeight(8 * PositionView.TILE_SIZE);
+
+        Board board = Board.getInstance();
+        board.addPieceCapturedEvent(piece -> {
+            squares.get(piece.getPosition()).getChildren().removeIf(PieceView.class::isInstance);
+            SoundPlayer.playCapture();
+        });
+        board.addPromotionEvent(piece -> new PromotionPieceDialog(piece.getPosition()).showAndWait().orElse(null));
     }
 
     public static BoardView getInstance() {
@@ -62,8 +69,9 @@ public class BoardView extends GridPane {
         Board.getInstance().findPieceAt(origin).ifPresent(piece -> showAvailablePositions(piece, false));
         if (Board.getInstance().movePiece(origin, target)) {
             squares.get(origin).getChildren().removeIf(PieceView.class::isInstance);
+            SoundPlayer.playMove();
             refreshBoard();
-        }
+        } else SoundPlayer.playInvalidMove();
     }
 
     public Color getTurn() {
