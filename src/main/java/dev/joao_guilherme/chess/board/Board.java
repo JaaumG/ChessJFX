@@ -162,7 +162,13 @@ public class Board {
         }
         return pos -> {
             if (isNotSafePositionForKing(king, pos)) return false;
-            if (isCastling(king.getPosition(), pos)) return getRookForCastling(king, pos).filter(r -> !r.hasMoved()).isPresent() && !isKingInCheck(king.getColor());
+            if (isCastling(king.getPosition(), pos)) {
+                boolean kingSide = pos.file() == 'g';
+                Position rookTarget = Position.of((kingSide ? 'F' : 'D'), king.getPosition().rank());
+                return getRookForCastling(king, pos)
+                        .filter(not(Rook::hasMoved))
+                        .filter(_ -> isSafeMove(king, rookTarget)).isPresent();
+            }
             return true;
         };
     }
@@ -208,6 +214,7 @@ public class Board {
         Position rookTarget = Position.of((kingSide ? 'F' : 'D'), king.getPosition().rank());
         return getRookForCastling(king, to)
                 .filter(not(Rook::hasMoved))
+                .filter(_ -> isSafeMove(king, rookTarget))
                 .map(rook -> {
                     rook.moveTo(rookTarget);
                     king.moveTo(to);
