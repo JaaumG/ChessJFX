@@ -298,6 +298,46 @@ public class Board {
         }
     }
 
+    public boolean noPieceInBetween(Position from, Position to) {
+        return isDiagonal(from, to) ? noPieceInBetweenDiagonal(from, to) : noPieceInBetweenStraight(from, to);
+    }
+
+    private boolean noPieceInBetweenDiagonal(Position from, Position to) {
+        return isDiagonal(from, to) && noPieceInBetween(from, to, true);
+    }
+
+    private boolean noPieceInBetweenStraight(Position from, Position to) {
+        return isStraight(from, to) && noPieceInBetween(from, to, false);
+    }
+
+    private boolean noPieceInBetween(Position from, Position to, boolean diagonal) {
+        if (to == null || from == null || from.equals(to)) return false;
+        int rowDir = Integer.signum(to.getRow() - from.getRow());
+        int colDir = Integer.signum(to.getColumn() - from.getColumn());
+        int currentRow = from.getRow() + rowDir;
+        int currentCol = from.getColumn() + colDir;
+
+        while (currentRow != to.getRow() || currentCol != to.getColumn()) {
+            if (diagonal && Math.abs(currentRow - from.getRow()) != Math.abs(currentCol - from.getColumn())) break;
+            Position pos = new Position(currentCol, currentRow);
+            boolean hasPieceSameColor = findPieceAt(pos)
+                    .map(piece -> piece.isSameColor(getPieceAt(from)))
+                    .isPresent();
+            if (hasPieceSameColor) return false;
+            currentRow += rowDir;
+            currentCol += colDir;
+        }
+        return true;
+    }
+
+    public boolean noSameColorPieceAtTarget(Color color, Position to) {
+        return findPieceAt(to).map(piece -> piece.isNotSameColor(color)).orElse(true);
+    }
+
+    public boolean noPieceAtTarget(Position to) {
+        return findPieceAt(to).isEmpty();
+    }
+
     public King findKing(Color color) {
         return pieces.get(color).stream().filter(King.class::isInstance).map(King.class::cast).findFirst().orElseThrow(() -> new IllegalStateException(color + " king not found"));
     }
