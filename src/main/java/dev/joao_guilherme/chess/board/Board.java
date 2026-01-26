@@ -18,6 +18,8 @@ import static dev.joao_guilherme.chess.enums.Color.WHITE;
 import static java.lang.Math.abs;
 import static java.util.function.Predicate.not;
 
+
+//TODO 25/01/2026: - Godclass necessita de refatoração, passando instância para Movement permitindo que o movimento das peças fique sobre controle total delas mesmas.
 public class Board extends BoardEvents {
 
     private final Position[][] positions = {
@@ -77,6 +79,7 @@ public class Board extends BoardEvents {
         ).stream().collect(Collectors.groupingBy(Piece::getColor, Collectors.toSet()));
     }
 
+    //TODO 25/01/2026: - Criar eventos para cheque e cheque-mate
     public boolean isCheckMate(Color color) {
         if (!isKingInCheck(color)) return false;
         for (Piece piece : pieces.get(color)) {
