@@ -18,6 +18,10 @@ public final class King extends Piece {
         return  (basicMovement || (isCastling(this, board, this.position, newPosition) && !hasMoved()));
     }
 
+    public boolean isInCheck(Board board) {
+        return board.getPieces(this.color.opposite()).stream().anyMatch(piece -> piece.isValidMove(board, this.position));
+    }
+
     public boolean castle(Board board, Position newPosition, Rook rook) {
         boolean kingSide = newPosition.file() == 'g';
         Position rookTarget = Position.of((kingSide ? 'F' : 'D'), getPosition().rank());
