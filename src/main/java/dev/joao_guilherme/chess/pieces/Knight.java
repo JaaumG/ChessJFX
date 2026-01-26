@@ -8,7 +8,7 @@ import static dev.joao_guilherme.chess.board.Movement.isLShaped;
 public final class Knight extends Piece {
 
     public Knight(Color color, Position position) {
-        super(color, "knight", position);
+        super(color, "knight", position, 3);
     }
 
     @Override

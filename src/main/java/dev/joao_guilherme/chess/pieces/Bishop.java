@@ -8,7 +8,7 @@ import static dev.joao_guilherme.chess.board.Movement.*;
 public final class Bishop extends Piece {
 
     public Bishop(Color color, Position position) {
-        super(color, "bishop", position);
+        super(color, "bishop", position, 3);
     }
 
     @Override

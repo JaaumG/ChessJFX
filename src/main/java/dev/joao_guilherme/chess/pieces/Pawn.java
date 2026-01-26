@@ -11,7 +11,7 @@ public final class Pawn extends Piece {
     private static final int SECOND_MOVE_DISTANCE = 1;
 
     public Pawn(Color color, Position position) {
-        super(color, "pawn", position);
+        super(color, "pawn", position, 1);
     }
 
     @Override

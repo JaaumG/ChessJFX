@@ -8,7 +8,7 @@ import static dev.joao_guilherme.chess.board.Movement.*;
 public final class Queen extends Piece {
 
     public Queen(Color color, Position position) {
-        super(color, "queen", position);
+        super(color, "queen", position, 9);
     }
 
     @Override
