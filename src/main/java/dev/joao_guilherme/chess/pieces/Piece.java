@@ -1,5 +1,6 @@
 package dev.joao_guilherme.chess.pieces;
 
+import dev.joao_guilherme.chess.board.Board;
 import dev.joao_guilherme.chess.board.Position;
 import dev.joao_guilherme.chess.enums.Color;
 
@@ -22,10 +23,10 @@ public abstract sealed class Piece permits Bishop, King, Knight, Queen, Pawn, Ro
         this.iconPath = "/pieces/%s-%s.png".formatted(name, color.name().toLowerCase().charAt(0));
     }
 
-    public abstract boolean isValidMove(Position newPosition);
+    public abstract boolean isValidMove(Board board, Position newPosition);
 
-    public boolean moveTo(Position newPosition) {
-        if (isValidMove(newPosition)) {
+    public boolean moveTo(Board board, Position newPosition) {
+        if (isValidMove(board, newPosition)) {
             setPosition(newPosition);
             moveCount++;
             return true;
