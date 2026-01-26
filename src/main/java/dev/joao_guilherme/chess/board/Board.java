@@ -88,7 +88,7 @@ public class Board implements Cloneable {
 
     //TODO 25/01/2026: - Criar eventos para cheque e cheque-mate
     public boolean isCheckMate(Color color) {
-        if (!findKing(color).isInCheck(this)) return false;
+        if (!isCheck(color)) return false;
         for (Piece piece : pieces.get(color)) {
             if (!piece.getPossibleMoves(this).isEmpty()) {
                 return false;
@@ -99,7 +99,7 @@ public class Board implements Cloneable {
 
     //TODO 24/01/2026: - Identificar quando não for mais possivel fazer checkmate
     public boolean isStaleMate(Color color) {
-        return !findKing(color).isInCheck(this) && pieces.get(color).stream().allMatch(piece -> piece.getPossibleMoves(this).isEmpty());
+        return !isCheck(color) && pieces.get(color).stream().allMatch(piece -> piece.getPossibleMoves(this).isEmpty());
     }
 
     private boolean promotion(Pawn pawn, Position to) {
@@ -249,6 +249,9 @@ public class Board implements Cloneable {
         return pieces.get(color).stream().filter(King.class::isInstance).map(King.class::cast).findFirst().orElseThrow(() -> new IllegalStateException(color + " king not found"));
     }
 
+    public boolean isCheck(Color color) {
+        return findKing(color).isInCheck(this);
+    }
     @Override
     public Board clone() {
         return new Board(this);
