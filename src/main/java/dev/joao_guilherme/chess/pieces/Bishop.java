@@ -9,11 +9,26 @@ import static dev.joao_guilherme.chess.board.Movement.*;
 public final class Bishop extends Piece {
 
     public Bishop(Color color, Position position) {
-        super(color, "bishop", position, 3);
+        super(color, "bishop", position);
+    }
+
+    private Bishop(Bishop piece) {
+        this(piece.color, piece.position);
+        this.moveCount = piece.moveCount;
     }
 
     @Override
     public boolean isValidMove(Board board, Position newPosition) {
         return isDiagonal(this.position, newPosition) && noPieceInBetween(board, position, newPosition) && noSameColorPieceAtTarget(board, color, newPosition) ;
+    }
+
+    @Override
+    public int getValue() {
+        return 3;
+    }
+
+    @Override
+    public Piece clone() {
+        return new Bishop(this);
     }
 }

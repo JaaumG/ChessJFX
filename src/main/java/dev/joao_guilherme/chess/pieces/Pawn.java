@@ -12,7 +12,12 @@ public final class Pawn extends Piece {
     private static final int SECOND_MOVE_DISTANCE = 1;
 
     public Pawn(Color color, Position position) {
-        super(color, "pawn", position, 1);
+        super(color, "pawn", position);
+    }
+
+    private Pawn(Pawn piece) {
+        this(piece.color, piece.position);
+        this.moveCount = piece.moveCount;
     }
 
     @Override
@@ -33,5 +38,19 @@ public final class Pawn extends Piece {
 
     public boolean reachedLastRank(Position to) {
         return to.getRow() == (color.equals(Color.WHITE) ? 8 : 1);
+    }
+
+    private int distanteToLastRank(Position to) {
+        return Math.abs((color.equals(Color.WHITE) ? 8 : 1) - to.getRow());
+    }
+
+    @Override
+    public int getValue() {
+        return 1;
+    }
+
+    @Override
+    public Piece clone() {
+        return new Pawn(this);
     }
 }

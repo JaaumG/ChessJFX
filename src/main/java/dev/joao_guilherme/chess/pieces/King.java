@@ -9,13 +9,23 @@ import static dev.joao_guilherme.chess.board.Movement.*;
 public final class King extends Piece {
 
     public King(Color color, Position position) {
-        super(color, "king", position, 0);
+        super(color, "king", position);
+    }
+
+    private King(King piece) {
+        this(piece.color, piece.position);
+        this.moveCount = piece.moveCount;
     }
 
     @Override
     public boolean isValidMove(Board board, Position newPosition) {
         boolean basicMovement = ((isStraight(this.position, newPosition) && distance(this.position, newPosition) == 1) || (isDiagonal(this.position, newPosition) && distance(this.position, newPosition) == 2)) && noSameColorPieceAtTarget(board, color, newPosition);
         return  (basicMovement || (isCastling(this, board, this.position, newPosition) && !hasMoved()));
+    }
+
+    @Override
+    public int getValue() {
+        return 10;
     }
 
     public boolean isInCheck(Board board) {
@@ -32,5 +42,10 @@ public final class King extends Piece {
             return true;
         }
         return false;
+    }
+
+    @Override
+    public Piece clone() {
+        return new King(this);
     }
 }
