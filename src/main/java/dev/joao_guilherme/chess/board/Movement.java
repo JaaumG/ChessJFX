@@ -5,6 +5,8 @@ import dev.joao_guilherme.chess.pieces.King;
 import dev.joao_guilherme.chess.pieces.Piece;
 import dev.joao_guilherme.chess.pieces.Rook;
 
+import java.util.Optional;
+
 import static java.lang.Math.abs;
 import static java.util.function.Predicate.not;
 
@@ -33,10 +35,8 @@ public abstract class Movement {
         while (currentRow != to.getRow() || currentCol != to.getColumn()) {
             if (diagonal && Math.abs(currentRow - from.getRow()) != Math.abs(currentCol - from.getColumn())) break;
             Position pos = new Position(currentCol, currentRow);
-            boolean hasPieceSameColor = board.findPieceAt(pos)
-                    .map(piece -> piece.isSameColor(board.getPieceAt(from)))
-                    .isPresent();
-            if (hasPieceSameColor) return false;
+            Optional<Piece> blocker = board.findPieceAt(pos);
+            if (blocker.isPresent()) return false;
             currentRow += rowDir;
             currentCol += colDir;
         }
@@ -114,7 +114,7 @@ public abstract class Movement {
     }
 
     public static boolean isCapturingMove(Board board, Piece piece, Position to) {
-        return hasOpponentPieceAtTarget(board, piece.getColor(), to);
+        return hasOpponentPieceAtTarget(board, piece.getColor(), to) && noSameColorPieceAtTarget(board, piece.getColor(), to);
     }
 
     public static boolean isPawnTwoRowFirstMove(Position from, Position to) {
