@@ -1,6 +1,5 @@
 package dev.joao_guilherme.chess.board;
 
-import dev.joao_guilherme.chess.board.events.BoardEvents;
 import dev.joao_guilherme.chess.enums.Color;
 import dev.joao_guilherme.chess.pieces.*;
 
@@ -14,7 +13,7 @@ import static dev.joao_guilherme.chess.enums.Color.WHITE;
 
 
 //TODO 25/01/2026: - Godclass necessita de refatoração, passando instância para Movement permitindo que o movimento das peças fique sobre controle total delas mesmas.
-public class Board extends BoardEvents {
+public class Board {
 
     private final Position[][] positions = {
             {A8, B8, C8, D8, E8, F8, G8, H8},
