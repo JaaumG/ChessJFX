@@ -5,6 +5,7 @@ import dev.joao_guilherme.chess.pieces.King;
 import dev.joao_guilherme.chess.pieces.Piece;
 import dev.joao_guilherme.chess.pieces.Rook;
 
+import static java.lang.Math.abs;
 import static java.util.function.Predicate.not;
 
 
@@ -117,6 +118,11 @@ public abstract class Movement {
     public static boolean isCapturingMove(Board board, Piece piece, Position to) {
         return hasOpponentPieceAtTarget(board, piece.getColor(), to) && board.isPieceMovementAvoidingCheck(piece, to);
     }
+
+    public static boolean isPawnTwoRowFirstMove(Position from, Position to) {
+        return abs(from.getRow() - to.getRow()) == 2;
+    }
+
     private static boolean isMovementInvalid(Position from, Position to) {
         return (to == null || from == null || from.equals(to));
     }
