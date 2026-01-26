@@ -223,6 +223,7 @@ public class Board implements Cloneable {
 
     private void nextTurn() {
         turn = turn.opposite();
+        eventPublisher.publish(new TurnEvent(turn));
     }
 
     public boolean isEnPassantLocation(Position from) {
