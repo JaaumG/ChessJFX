@@ -219,7 +219,7 @@ public class Board extends BoardEvents {
         }
         if (piece instanceof Pawn pawn) {
             if (isPawnTwoRowFirstMove(from, to)) enPassantAvailablePosition = Position.of(from.file(), (from.rank() + to.rank()) / 2);
-            else if (isEnPassant(from, to, pawn.getColor())) return performEnPassantMove(pawn, to);
+            else if (isEnPassant(from, to, pawn.getColor())) return performEnPassantMove(pawn, from, to);
             else enPassantAvailablePosition = null;
             if (to.rank() == (pawn.getColor() == WHITE ? 8 : 1)) return promote(pawn, to);
         }
