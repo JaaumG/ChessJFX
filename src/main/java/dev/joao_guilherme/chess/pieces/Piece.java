@@ -14,13 +14,11 @@ public abstract sealed class Piece implements Cloneable permits Bishop, King, Kn
     final String iconPath;
     Position position;
     int moveCount = 0;
-    final int value;
 
-    protected Piece(Color color, String name, Position position, int value) {
+    protected Piece(Color color, String name, Position position) {
         this.color = color;
         this.name = name;
         this.position = position;
-        this.value = value;
         this.iconPath = "/pieces/%s-%s.png".formatted(name, color.name().toLowerCase().charAt(0));
     }
 
@@ -41,9 +39,8 @@ public abstract sealed class Piece implements Cloneable permits Bishop, King, Kn
                 .toList();
     }
 
-    public int getValue() {
-        return value;
-    }
+
+    public abstract int getValue();
 
     public Color getColor() {
         return color;
@@ -61,12 +58,7 @@ public abstract sealed class Piece implements Cloneable permits Bishop, King, Kn
         return position;
     }
 
-    /**
-     * For performing a move use the {@link Piece#moveTo(Board, Position)}
-     *
-     * this method is used internally to validation of moves and evaluation
-     */
-    public void setPosition(Position position) {
+    protected void setPosition(Position position) {
         this.position = position;
     }
 
