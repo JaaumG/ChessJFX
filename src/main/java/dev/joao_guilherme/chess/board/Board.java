@@ -95,7 +95,7 @@ public class Board extends BoardEvents {
     public boolean promote(Pawn pawn, Position promotionPosition) {
         Class<? extends Piece> tClass = notifyPiecePromoted(pawn);
         if (tClass == null) return false;
-        findPieceAt(promotionPosition).ifPresent(this::capturePiece);
+        findPieceAt(promotionPosition).ifPresent(piece -> capturePiece(pawn, piece));
         try {
             Piece promotedPiece = tClass.getConstructor(Color.class, Position.class).newInstance(pawn.getColor(), promotionPosition);
             pieces.get(promotedPiece.getColor()).add(promotedPiece);
@@ -146,10 +146,12 @@ public class Board extends BoardEvents {
                 .findFirst();
     }
 
-    public void capturePiece(Piece piece) {
-        if (pieces.get(piece.getColor()).remove(piece)) {
-            notifyPieceCaptured(piece);
-        }
+    public boolean capturePiece(Piece piece, Piece capturedPiece) {
+        return piece.moveTo(capturedPiece.getPosition()) && pieces.get(capturedPiece.getColor()).remove(capturedPiece);
+    }
+
+    public boolean capturePieceEnPassant(Pawn pawn, Piece capturedPiece, Position to) {
+        return pawn.moveTo(to) && pieces.get(capturedPiece.getColor()).remove(capturedPiece);
     }
 
     public Set<Piece> getPieces() {
