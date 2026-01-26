@@ -44,61 +44,25 @@ public class BoardView extends GridPane {
         });
 
         eventPublisher.subscribe(CaptureEvent.class, event -> {
-            squares.get(event.position())
-                    .getChildren()
-                    .removeIf(PieceView.class::isInstance);
-
-            squares.get(event.capturedPiece().getPosition())
-                    .getChildren()
-                    .removeIf(PieceView.class::isInstance);
-
-            squares.get(event.capturedPosition())
-                    .getChildren()
-                    .add(new PieceView(event.piece()));
-
+            removePieceAt(event.position());
+            movePiece(event.piece().getPosition(), event.piece());
             SoundPlayer.playCapture();
         });
 
         eventPublisher.subscribe(MoveEvent.class, event -> {
-            squares.get(event.from())
-                    .getChildren()
-                    .removeIf(PieceView.class::isInstance);
-
-            squares.get(event.to())
-                    .getChildren()
-                    .add(new PieceView(event.piece()));
-
+            movePiece(event.from(), event.piece());
             SoundPlayer.playMove();
         });
 
         eventPublisher.subscribe(CastleEvent.class, event -> {
             SoundPlayer.playCastling();
-
-            squares.get(event.kingPreviousPosition())
-                    .getChildren()
-                    .removeIf(PieceView.class::isInstance);
-
-            squares.get(event.rookPreviousPosition())
-                    .getChildren()
-                    .removeIf(PieceView.class::isInstance);
-
-            squares.get(event.king().getPosition())
-                    .getChildren()
-                    .add(new PieceView(event.king()));
-
-            squares.get(event.rook().getPosition())
-                    .getChildren()
-                    .add(new PieceView(event.rook()));
+            movePiece(event.rookPreviousPosition(), event.rook());
+            movePiece(event.kingPreviousPosition(), event.king());
         });
 
         eventPublisher.subscribe(PromoteEvent.class, event -> {
-            squares.get(event.promotedPosition())
-                    .getChildren()
-                    .removeIf(PieceView.class::isInstance);
-
-            squares.get(event.promotedPosition())
-                    .getChildren()
-                    .add(new PieceView(event.promotedPiece()));
+            removePieceAt(event.promotedPosition());
+            addPiece(event.promotedPiece());
         });
     }
 
@@ -150,5 +114,19 @@ public class BoardView extends GridPane {
                     });
             System.out.println("Checkmate! " + getTurn().opposite() + " wins.");
         }
+    }
+
+    private void movePiece(Position from, Piece piece) {
+        removePieceAt(from);
+        addPiece(piece);
+    }
+
+    private void removePieceAt(Position position) {
+        squares.get(position).getChildren().removeIf(PieceView.class::isInstance);
+    }
+
+    private void addPiece(Piece piece) {
+        Position position = piece.getPosition();
+        squares.get(position).getChildren().add(new PieceView(piece));
     }
 }

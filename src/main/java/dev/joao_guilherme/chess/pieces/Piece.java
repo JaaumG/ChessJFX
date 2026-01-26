@@ -39,7 +39,6 @@ public abstract sealed class Piece implements Cloneable permits Bishop, King, Kn
                 .toList();
     }
 
-
     public abstract int getValue();
 
     public Color getColor() {
