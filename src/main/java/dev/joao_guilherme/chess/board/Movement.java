@@ -1,9 +1,45 @@
 package dev.joao_guilherme.chess.board;
 
 import dev.joao_guilherme.chess.enums.Color;
+import dev.joao_guilherme.chess.pieces.King;
+import dev.joao_guilherme.chess.pieces.Rook;
+
+import static java.util.function.Predicate.not;
 
 
 public abstract class Movement {
+
+    public static boolean noPieceInBetween(Board board,Position from, Position to) {
+        return isDiagonal(from, to) ? noPieceInBetweenDiagonal(board,from, to) : noPieceInBetweenStraight(board, from, to);
+    }
+
+    private static boolean noPieceInBetweenDiagonal(Board board,Position from, Position to) {
+        return isDiagonal(from, to) && noPieceInBetween(board, from, to, true);
+    }
+
+    private static boolean noPieceInBetweenStraight(Board board,Position from, Position to) {
+        return isStraight(from, to) && noPieceInBetween(board, from, to, false);
+    }
+
+    private static boolean noPieceInBetween(Board board, Position from, Position to, boolean diagonal) {
+        if (to == null || from == null || from.equals(to)) return false;
+        int rowDir = Integer.signum(to.getRow() - from.getRow());
+        int colDir = Integer.signum(to.getColumn() - from.getColumn());
+        int currentRow = from.getRow() + rowDir;
+        int currentCol = from.getColumn() + colDir;
+
+        while (currentRow != to.getRow() || currentCol != to.getColumn()) {
+            if (diagonal && Math.abs(currentRow - from.getRow()) != Math.abs(currentCol - from.getColumn())) break;
+            Position pos = new Position(currentCol, currentRow);
+            boolean hasPieceSameColor = board.findPieceAt(pos)
+                    .map(piece -> piece.isSameColor(board.getPieceAt(from)))
+                    .isPresent();
+            if (hasPieceSameColor) return false;
+            currentRow += rowDir;
+            currentCol += colDir;
+        }
+        return true;
+    }
 
     public static boolean isDiagonal(Position from, Position to) {
         if (isMovementInvalid(from, to)) return false;
@@ -41,17 +77,40 @@ public abstract class Movement {
         return (from.getRow() == to.getRow()) && (from.getColumn() != to.getColumn());
     }
 
-    public static boolean isCastling(Position from, Position to) {
+    public static boolean isCastling(King king, Board board, Position from, Position to) {
         if (isMovementInvalid(from, to)) return false;
         if (!isSideways(from, to)) return false;
-        return distance(from, to) == 2;
+        if (distance(from, to) != 2) return false;
+        boolean kingSide = to.file() == 'g';
+        Position rookTarget = Position.of((kingSide ? 'F' : 'D'), from.rank());
+        return board.findPieceAt(Position.of((kingSide ? 'H' : 'A'), from.rank()))
+                .filter(Rook.class::isInstance)
+                .map(Rook.class::cast)
+                .filter(rook -> rook.getColor() == king.getColor())
+                .filter(rook -> noPieceInBetween(board, from, rook.getPosition()))
+                .filter(not(Rook::hasMoved))
+                .filter(_ -> board.isPieceMovementAvoidingCheck(king, rookTarget)).isPresent();
     }
 
-    public static boolean isEnPassant(Position from, Position to, Color color) {
+    public static boolean isEnPassant(Board board, Position from, Position to, Color color) {
         if (isMovementInvalid(from, to)) return false;
         if (!isDiagonal(from, to)) return false;
         if (distance(from, to) != 2) return false;
-        return isUpward(from, to, color);
+        if (!noPieceAtTarget(board, to)) return false;
+        if (!isUpward(from, to, color)) return false;
+        return board.isEnPassantLocation(to);
+    }
+
+    public static boolean noPieceAtTarget(Board board, Position to) {
+        return board.findPieceAt(to).isEmpty();
+    }
+
+    public static boolean noSameColorPieceAtTarget(Board board, Color color, Position to) {
+        return board.findPieceAt(to).map(piece -> piece.isNotSameColor(color)).orElse(true);
+    }
+
+    public static boolean hasOpponentPieceAtTarget(Board board, Color color, Position position) {
+        return board.findPieceAt(position).map(piece -> piece.isNotSameColor(color)).orElse(false);
     }
 
     private static boolean isMovementInvalid(Position from, Position to) {
