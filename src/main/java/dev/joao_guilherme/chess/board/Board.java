@@ -78,7 +78,7 @@ public class Board extends BoardEvents {
     public boolean isCheckMate(Color color) {
         if (!isKingInCheck(color)) return false;
         for (Piece piece : pieces.get(color)) {
-            if (!getPositionsAvailableForPiece(piece).isEmpty()) {
+            if (!piece.getPossibleMoves(this).isEmpty()) {
                 return false;
             }
         }
@@ -87,7 +87,7 @@ public class Board extends BoardEvents {
 
     //TODO 24/01/2026: - Identificar quando não for mais possivel fazer checkmate
     public boolean isStaleMate(Color color) {
-        return !isKingInCheck(color) && pieces.get(color).stream().allMatch(piece -> getPositionsAvailableForPiece(piece).isEmpty());
+        return !isKingInCheck(color) && pieces.get(color).stream().allMatch(piece -> piece.getPossibleMoves(this).isEmpty());
     }
 
     public boolean promote(Pawn pawn, Position promotionPosition) {
@@ -125,10 +125,6 @@ public class Board extends BoardEvents {
         target.ifPresent(t -> pieces.get(t.getColor()).add(t));
 
         return !kingInCheck;
-    }
-
-    public boolean isPawnTwoRowFirstMove(Position from, Position to) {
-        return abs(from.getRow() - to.getRow()) == 2;
     }
 
     public Piece getPieceAt(Position position) {
@@ -169,15 +165,9 @@ public class Board extends BoardEvents {
         return Arrays.stream(positions).flatMap(Arrays::stream).toList();
     }
 
-    public List<Position> getPositionsAvailableForPiece(Piece piece) {
-        return getPositions().stream()
-                .filter(to -> isPieceMovementAvoidingCheck(piece, to))
-                .toList();
-    }
-
     public boolean movePiece(Position from, Position to) {
         Piece piece = getPieceAt(from);
-        if (piece.getColor() != turn || !isPieceMovementAvoidingCheck(piece, to)) return false;
+        if (piece.getColor() != turn) return false;
         if (piece instanceof King king && isCastling(king, this, from, to)) return performCastlingMove(king, to);
         if (piece instanceof Pawn pawn) {
             if (isPawnTwoRowFirstMove(from, to)) enPassantAvailablePosition = Position.of(from.file(), (from.rank() + to.rank()) / 2);
@@ -240,24 +230,6 @@ public class Board extends BoardEvents {
 
     private void nextTurn() {
         turn = turn.opposite();
-    }
-
-    private void printDebugState() {
-        System.out.println("Turn: " + turn);
-        for (int row = 0; row < 8; row++) {
-            for (int col = 0; col < 8; col++) {
-                Position pos = positions[row][col];
-                Optional<Piece> pieceOpt = findPieceAt(pos);
-                if (pieceOpt.isPresent()) {
-                    Piece piece = pieceOpt.get();
-                    System.out.print(piece.getName().charAt(0));
-                    System.out.print(piece.getColor() == WHITE ? "W " : "B ");
-                } else {
-                    System.out.print("-- ");
-                }
-            }
-            System.out.println();
-        }
     }
 
     public boolean isEnPassantLocation(Position from) {
