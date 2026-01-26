@@ -31,11 +31,18 @@ public class BoardView extends GridPane {
         setWidth(8 * PositionView.TILE_SIZE);
         setHeight(8 * PositionView.TILE_SIZE);
 
-        board.addPieceCapturedEvent(piece -> {
-            squares.get(piece.getPosition()).getChildren().removeIf(PieceView.class::isInstance);
+        board.addPromotionEvent(piece -> new PromotionPieceDialog(piece.getPosition()).showAndWait().orElse(null));
+        board.addPieceCapturedEvent(event -> {
+            squares.get(event.position()).getChildren().removeIf(PieceView.class::isInstance);
+            squares.get(event.capturedPiece().getPosition()).getChildren().removeIf(PieceView.class::isInstance);
+            squares.get(event.capturedPosition()).getChildren().add(new PieceView(event.piece()));
             SoundPlayer.playCapture();
         });
-        board.addPromotionEvent(piece -> new PromotionPieceDialog(piece.getPosition()).showAndWait().orElse(null));
+        board.addMoveEvent(event -> {
+            squares.get(event.from()).getChildren().removeIf(PieceView.class::isInstance);
+            squares.get(event.to()).getChildren().add(new PieceView(event.piece()));
+            SoundPlayer.playMove();
+        });
     }
 
     public static BoardView getInstance() {
@@ -56,7 +63,6 @@ public class BoardView extends GridPane {
             PositionView stackPane = squares.get(piece.getPosition());
             stackPane.getChildren().add(new PieceView(piece));
         });
-        validateForCheckmate();
         rotateBoard();
     }
 
@@ -67,12 +73,9 @@ public class BoardView extends GridPane {
     }
 
     public void performMove(Position origin, Position target) {
-        board.findPieceAt(origin).ifPresent(piece -> showAvailablePositions(piece, false));
-        if (board.movePiece(origin, target)) {
-            squares.get(origin).getChildren().removeIf(PieceView.class::isInstance);
-            SoundPlayer.playMove();
-            refreshBoard();
-        } else SoundPlayer.playInvalidMove();
+        if (!board.movePiece(origin, target)) {
+            SoundPlayer.playInvalidMove();
+        }
     }
 
     public Color getTurn() {
