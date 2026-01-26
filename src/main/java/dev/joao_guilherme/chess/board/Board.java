@@ -143,7 +143,13 @@ public class Board extends BoardEvents {
     }
 
     public boolean capturePiece(Piece piece, Piece capturedPiece) {
-        return piece.moveTo(this, capturedPiece.getPosition()) && pieces.get(capturedPiece.getColor()).remove(capturedPiece);
+        Position from = piece.getPosition();
+        if (piece.moveTo(this, capturedPiece.getPosition()) && pieces.get(capturedPiece.getColor()).remove(capturedPiece)) {
+            notifyPieceCaptured(from, piece.getPosition(), piece, capturedPiece);
+            nextTurn();
+            return true;
+        }
+        return false;
     }
 
     public boolean capturePieceEnPassant(Pawn pawn, Piece capturedPiece, Position to) {
@@ -168,7 +174,6 @@ public class Board extends BoardEvents {
     public boolean movePiece(Position from, Position to) {
         Piece piece = getPieceAt(from);
         if (piece.getColor() != turn || !isPieceMovementAvoidingCheck(piece, to)) return false;
-        Optional<Piece> target = findPieceAt(to);
         if (piece instanceof King king && isCastling(king, this, from, to)) return performCastlingMove(king, to);
         if (piece instanceof Pawn pawn) {
             if (isPawnTwoRowFirstMove(from, to)) enPassantAvailablePosition = Position.of(from.file(), (from.rank() + to.rank()) / 2);
@@ -176,10 +181,13 @@ public class Board extends BoardEvents {
             else enPassantAvailablePosition = null;
             if (to.rank() == (pawn.getColor() == WHITE ? 8 : 1)) return promote(pawn, to);
         }
-        if (target.isPresent() && capturePiece(piece, target.get())) notifyPieceCaptured(from, to, piece, target.get());
-        else if (piece.moveTo(this, to)) notifyMove(from, to, piece);
-        nextTurn();
-        return true;
+        if (isCapturingMove(this, piece, to)) return capturePiece(piece, getPieceAt(to));
+        if (piece.moveTo(this, to)) {
+            notifyMove(from, to, piece);
+            nextTurn();
+            return true;
+        }
+        return false;
     }
 
     private boolean performCastlingMove(King king, Position to) {
