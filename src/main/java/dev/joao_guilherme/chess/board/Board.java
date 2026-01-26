@@ -165,10 +165,9 @@ public class Board extends BoardEvents {
 
     public List<Position> getPositionsAvailableForPiece(Piece piece) {
         return getPositions().stream()
-                .filter(piece::isValidMove)
+                .filter(to -> isPieceMovementAvoidingCheck(piece, to))
                 .filter(isValidMovementForKing(piece))
                 .filter(isValidMovementForPawn(piece))
-                .filter(to -> isMoveAllowed(piece, to))
                 .toList();
     }
 
@@ -212,25 +211,22 @@ public class Board extends BoardEvents {
 
     public boolean movePiece(Position from, Position to) {
         Piece piece = getPieceAt(from);
-        if (piece.getColor() != turn) return false;
+        if (piece.getColor() != turn || !isPieceMovementAvoidingCheck(piece, to)) return false;
         Optional<Piece> target = findPieceAt(to);
         if (piece instanceof King king) {
             if (isNotSafePositionForKing(king, to)) return false;
             if (isCastling(from, to)) return performCastlingMove(king, to);
         }
-        else if (!isMoveAllowed(piece, to)) return false;
         if (piece instanceof Pawn pawn) {
             if (isPawnTwoRowFirstMove(from, to)) enPassantAvailablePosition = Position.of(from.file(), (from.rank() + to.rank()) / 2);
             else if (isEnPassant(from, to, pawn.getColor())) return performEnPassantMove(pawn, to);
             else enPassantAvailablePosition = null;
             if (to.rank() == (pawn.getColor() == WHITE ? 8 : 1)) return promote(pawn, to);
         }
-        if (piece.moveTo(to)) {
-            target.ifPresent(this::capturePiece);
-            nextTurn();
-            return true;
-        }
-        return false;
+        if (target.isPresent() && capturePiece(piece, target.get())) notifyPieceCaptured(from, to, piece, target.get());
+        else if (piece.moveTo(to)) notifyMove(from, to, piece);
+        nextTurn();
+        return true;
     }
 
     private boolean performCastlingMove(King king, Position to) {
@@ -247,12 +243,13 @@ public class Board extends BoardEvents {
                 }).orElse(false);
     }
 
-    private boolean performEnPassantMove(Pawn pawn, Position to) {
+    private boolean performEnPassantMove(Pawn pawn, Position from, Position to) {
         return getPawnForEnPassant(pawn, to)
-                .filter(_ -> isMoveAllowed(pawn, to))
+                .filter(_ -> isPieceMovementAvoidingCheck(pawn, to))
+                .filter(piece -> capturePieceEnPassant(pawn, piece, to))
                 .map(piece -> {
-                    capturePiece(piece);
-                    pawn.moveTo(to);
+                    notifyPieceCaptured(from, to, pawn, piece);
+                    enPassantAvailablePosition = null;
                     nextTurn();
                     return true;
                 }).orElse(false);
@@ -283,7 +280,7 @@ public class Board extends BoardEvents {
         Position rookTarget = Position.of((kingSide ? 'F' : 'D'), king.getPosition().rank());
         return getRookForCastling(king, to)
                 .filter(not(Rook::hasMoved))
-                .filter(_ -> isMoveAllowed(king, rookTarget)).isPresent();
+                .filter(_ -> isPieceMovementAvoidingCheck(king, rookTarget)).isPresent();
     }
 
     private void nextTurn() {
