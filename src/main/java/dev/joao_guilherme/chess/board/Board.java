@@ -28,8 +28,10 @@ public class Board {
     private Position enPassantAvailablePosition;
     private Map<Color, Set<Piece>> pieces;
     private Color turn;
+    private EventPublisher eventPublisher;
 
-    public Board() {
+    public Board(EventPublisher eventPublisher) {
+        this.eventPublisher = eventPublisher;
         setupInitialPositions();
         turn = WHITE;
     }
