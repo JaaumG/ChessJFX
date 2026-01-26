@@ -30,4 +30,8 @@ public final class Pawn extends Piece {
 
         return noSameColorPieceAtTarget(board, this.color, newPosition) && isUpward(this.position, newPosition, this.color) && (basicsMovements || diagonalCapture || enPassant);
     }
+
+    public boolean reachedLastRank(Position to) {
+        return to.getRow() == (color.equals(Color.WHITE) ? 8 : 1);
+    }
 }
