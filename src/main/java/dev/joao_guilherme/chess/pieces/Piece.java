@@ -51,7 +51,7 @@ public abstract sealed class Piece permits Bishop, King, Knight, Queen, Pawn, Ro
     }
 
     /**
-     * For performing a move use the {@link Piece#moveTo(Position)}
+     * For performing a move use the {@link Piece#moveTo(Board, Position)}
      *
      * this method is used internally to validation of moves and evaluation
      */
