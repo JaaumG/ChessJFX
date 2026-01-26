@@ -12,11 +12,13 @@ public abstract sealed class Piece permits Bishop, King, Knight, Queen, Pawn, Ro
     final String iconPath;
     Position position;
     int moveCount = 0;
+    final int value;
 
-    protected Piece(Color color, String name, Position position) {
+    protected Piece(Color color, String name, Position position, int value) {
         this.color = color;
         this.name = name;
         this.position = position;
+        this.value = value;
         this.iconPath = "/pieces/%s-%s.png".formatted(name, color.name().toLowerCase().charAt(0));
     }
 
