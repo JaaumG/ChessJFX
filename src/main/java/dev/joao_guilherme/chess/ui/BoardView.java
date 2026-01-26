@@ -43,6 +43,13 @@ public class BoardView extends GridPane {
             squares.get(event.to()).getChildren().add(new PieceView(event.piece()));
             SoundPlayer.playMove();
         });
+        board.addCastlingEvent(event -> {
+            SoundPlayer.playCastling();
+            squares.get(event.kingPreviousPosition()).getChildren().removeIf(PieceView.class::isInstance);
+            squares.get(event.rookPreviousPosition()).getChildren().removeIf(PieceView.class::isInstance);
+            squares.get(event.king().getPosition()).getChildren().add(new PieceView(event.king()));
+            squares.get(event.rook().getPosition()).getChildren().add(new PieceView(event.rook()));
+        });
     }
 
     public static BoardView getInstance() {
