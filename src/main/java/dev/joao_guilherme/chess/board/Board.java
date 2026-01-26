@@ -11,7 +11,6 @@ import static dev.joao_guilherme.chess.board.Movement.*;
 import static dev.joao_guilherme.chess.board.Position.*;
 import static dev.joao_guilherme.chess.enums.Color.BLACK;
 import static dev.joao_guilherme.chess.enums.Color.WHITE;
-import static java.lang.Math.abs;
 
 
 //TODO 25/01/2026: - Godclass necessita de refatoração, passando instância para Movement permitindo que o movimento das peças fique sobre controle total delas mesmas.
@@ -189,10 +188,12 @@ public class Board extends BoardEvents {
                 .map(rook -> {
                     Position kingStart = king.getPosition();
                     Position rookStart = rook.getPosition();
-                    king.castle(this, to, rook);
-                    notifyKingCastled(king, rook, kingStart, rookStart);
-                    nextTurn();
-                    return true;
+                    if (king.castle(this, to, rook)) {
+                        notifyKingCastled(king, rook, kingStart, rookStart);
+                        nextTurn();
+                        return true;
+                    }
+                    return false;
                 }).orElse(false);
     }
 
