@@ -5,18 +5,13 @@ import dev.joao_guilherme.chess.enums.Color;
 import dev.joao_guilherme.chess.pieces.*;
 
 import java.util.*;
-import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
-import static dev.joao_guilherme.chess.board.Movement.isCastling;
-import static dev.joao_guilherme.chess.board.Movement.isDiagonal;
-import static dev.joao_guilherme.chess.board.Movement.isOnSameColumn;
-import static dev.joao_guilherme.chess.board.Movement.isStraight;
+import static dev.joao_guilherme.chess.board.Movement.*;
 import static dev.joao_guilherme.chess.board.Position.*;
 import static dev.joao_guilherme.chess.enums.Color.BLACK;
 import static dev.joao_guilherme.chess.enums.Color.WHITE;
 import static java.lang.Math.abs;
-import static java.util.function.Predicate.not;
 
 
 //TODO 25/01/2026: - Godclass necessita de refatoração, passando instância para Movement permitindo que o movimento das peças fique sobre controle total delas mesmas.
@@ -96,13 +91,15 @@ public class Board extends BoardEvents {
     }
 
     public boolean promote(Pawn pawn, Position promotionPosition) {
-        Class<? extends Piece> tClass = notifyPiecePromoted(pawn);
+        Class<? extends Piece> tClass = requestPiecePromoted(pawn);
         if (tClass == null) return false;
+        Position pawnPreviousPosition = pawn.getPosition();
         findPieceAt(promotionPosition).ifPresent(piece -> capturePiece(pawn, piece));
         try {
             Piece promotedPiece = tClass.getConstructor(Color.class, Position.class).newInstance(pawn.getColor(), promotionPosition);
             pieces.get(promotedPiece.getColor()).add(promotedPiece);
             pieces.get(pawn.getColor()).remove(pawn);
+            notifyPromotionEvent(pawn, promotedPiece, pawnPreviousPosition, promotionPosition);
             nextTurn();
             return true;
         } catch (Exception e) {
