@@ -14,7 +14,7 @@ import static dev.joao_guilherme.chess.enums.Color.WHITE;
 
 
 //TODO 25/01/2026: - Godclass necessita de refatoração, passando instância para Movement permitindo que o movimento das peças fique sobre controle total delas mesmas.
-public class Board {
+public class Board implements Cloneable {
 
     private final Position[][] positions = {
             {A8, B8, C8, D8, E8, F8, G8, H8},
@@ -240,5 +240,19 @@ public class Board {
 
     public King findKing(Color color) {
         return pieces.get(color).stream().filter(King.class::isInstance).map(King.class::cast).findFirst().orElseThrow(() -> new IllegalStateException(color + " king not found"));
+    }
+
+    @Override
+    public Board clone() {
+        try {
+            Board clone = (Board) super.clone();
+            clone.pieces = pieces.entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, e -> new HashSet<>(e.getValue().stream().map(Piece::clone).collect(Collectors.toSet()))));
+            clone.turn = turn;
+            clone.enPassantAvailablePosition = enPassantAvailablePosition;
+            clone.eventPublisher = new EventPublisher();
+            return clone;
+        } catch (CloneNotSupportedException e) {
+            throw new AssertionError();
+        }
     }
 }
