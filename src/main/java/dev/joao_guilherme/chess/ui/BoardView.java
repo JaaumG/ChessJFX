@@ -3,6 +3,7 @@ package dev.joao_guilherme.chess.ui;
 import dev.joao_guilherme.chess.board.Board;
 import dev.joao_guilherme.chess.board.Position;
 import dev.joao_guilherme.chess.enums.Color;
+import dev.joao_guilherme.chess.events.*;
 import dev.joao_guilherme.chess.pieces.*;
 import javafx.scene.layout.GridPane;
 
@@ -18,7 +19,8 @@ public class BoardView extends GridPane {
     private final Board board;
 
     private BoardView() {
-        board = new Board();
+        EventPublisher eventPublisher = new EventPublisher();
+        board = new Board(eventPublisher);
         for (Position position : board.getPositions()) {
             PositionView positionView = new PositionView(position);
             squares.put(position, positionView);
@@ -31,29 +33,72 @@ public class BoardView extends GridPane {
         setWidth(8 * PositionView.TILE_SIZE);
         setHeight(8 * PositionView.TILE_SIZE);
 
-        board.addPromotionRequestEvent(piece -> new PromotionPieceDialog(piece.getPosition()).showAndWait().orElse(null));
-        board.addPieceCapturedEvent(event -> {
-            squares.get(event.position()).getChildren().removeIf(PieceView.class::isInstance);
-            squares.get(event.capturedPiece().getPosition()).getChildren().removeIf(PieceView.class::isInstance);
-            squares.get(event.capturedPosition()).getChildren().add(new PieceView(event.piece()));
+        eventPublisher.subscribe(PromotionRequestEvent.class, event -> {
+            PromotionPieceDialog dialog = new PromotionPieceDialog(event.position());
+
+            Class<? extends Piece> aClass = dialog.showAndWait().orElse(null);
+
+            if (aClass != null) {
+                board.promote(event.position(), aClass);
+            }
+        });
+
+        eventPublisher.subscribe(CaptureEvent.class, event -> {
+            squares.get(event.position())
+                    .getChildren()
+                    .removeIf(PieceView.class::isInstance);
+
+            squares.get(event.capturedPiece().getPosition())
+                    .getChildren()
+                    .removeIf(PieceView.class::isInstance);
+
+            squares.get(event.capturedPosition())
+                    .getChildren()
+                    .add(new PieceView(event.piece()));
+
             SoundPlayer.playCapture();
         });
-        board.addMoveEvent(event -> {
-            squares.get(event.from()).getChildren().removeIf(PieceView.class::isInstance);
-            squares.get(event.to()).getChildren().add(new PieceView(event.piece()));
+
+        eventPublisher.subscribe(MoveEvent.class, event -> {
+            squares.get(event.from())
+                    .getChildren()
+                    .removeIf(PieceView.class::isInstance);
+
+            squares.get(event.to())
+                    .getChildren()
+                    .add(new PieceView(event.piece()));
+
             SoundPlayer.playMove();
         });
-        board.addCastlingEvent(event -> {
+
+        eventPublisher.subscribe(CastleEvent.class, event -> {
             SoundPlayer.playCastling();
-            squares.get(event.kingPreviousPosition()).getChildren().removeIf(PieceView.class::isInstance);
-            squares.get(event.rookPreviousPosition()).getChildren().removeIf(PieceView.class::isInstance);
-            squares.get(event.king().getPosition()).getChildren().add(new PieceView(event.king()));
-            squares.get(event.rook().getPosition()).getChildren().add(new PieceView(event.rook()));
+
+            squares.get(event.kingPreviousPosition())
+                    .getChildren()
+                    .removeIf(PieceView.class::isInstance);
+
+            squares.get(event.rookPreviousPosition())
+                    .getChildren()
+                    .removeIf(PieceView.class::isInstance);
+
+            squares.get(event.king().getPosition())
+                    .getChildren()
+                    .add(new PieceView(event.king()));
+
+            squares.get(event.rook().getPosition())
+                    .getChildren()
+                    .add(new PieceView(event.rook()));
         });
-        board.addPromotionEvent(event -> {
-            squares.get(event.previousPosition()).getChildren().removeIf(PieceView.class::isInstance);
-            squares.get(event.promotedPosition()).getChildren().removeIf(PieceView.class::isInstance);
-            squares.get(event.promotedPosition()).getChildren().add(new PieceView(event.promotedPiece()));
+
+        eventPublisher.subscribe(PromoteEvent.class, event -> {
+            squares.get(event.promotedPosition())
+                    .getChildren()
+                    .removeIf(PieceView.class::isInstance);
+
+            squares.get(event.promotedPosition())
+                    .getChildren()
+                    .add(new PieceView(event.promotedPiece()));
         });
     }
 
