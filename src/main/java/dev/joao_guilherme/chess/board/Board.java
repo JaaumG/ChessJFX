@@ -102,10 +102,12 @@ public class Board implements Cloneable {
         return !findKing(color).isInCheck(this) && pieces.get(color).stream().allMatch(piece -> piece.getPossibleMoves(this).isEmpty());
     }
 
-    private void checkPromotion(Piece piece, Position to) {
-        if (piece instanceof Pawn pawn && pawn.reachedLastRank(to)) {
+    private boolean promotion(Pawn pawn, Position to) {
+        if (pawn.reachedLastRank(to)) {
             eventPublisher.publish(new PromotionRequestEvent(pawn, to));
+            return  true;
         }
+        return false;
     }
 
     public boolean promote(Position promotionPosition, Class<? extends Piece> tClass) {
@@ -143,6 +145,8 @@ public class Board implements Cloneable {
 
     public boolean capturePiece(Piece piece, Piece capturedPiece) {
         Position from = piece.getPosition();
+        if (capturedPiece == null || capturedPiece.getColor() == piece.getColor()) return false;
+        if (capturedPiece instanceof King) return false;
         if (piece.moveTo(this, capturedPiece.getPosition()) && pieces.get(capturedPiece.getColor()).remove(capturedPiece)) {
             eventPublisher.publish(new CaptureEvent(from, piece.getPosition(), piece, capturedPiece));
             nextTurn();
@@ -176,12 +180,12 @@ public class Board implements Cloneable {
             if (isPawnTwoRowFirstMove(from, to)) enPassantAvailablePosition = Position.of(from.file(), (from.rank() + to.rank()) / 2);
             else if (isEnPassant(this, from, to, pawn.getColor())) return performEnPassantMove(pawn, from, to);
             else enPassantAvailablePosition = null;
+            if (pawn.reachedLastRank(to)) return promotion(pawn, to);
         }
         if (isCapturingMove(this, piece, to)) return capturePiece(piece, getPieceAt(to));
         if (piece.moveTo(this, to)) {
             eventPublisher.publish(new MoveEvent(from, to, piece));
             nextTurn();
-            checkPromotion(piece, to);
             return true;
         }
         return false;
