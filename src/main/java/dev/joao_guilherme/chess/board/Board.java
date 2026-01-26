@@ -108,11 +108,11 @@ public class Board extends BoardEvents {
     }
 
     public boolean isKingInCheck(Color color) {
-        return pieces.get(color.opposite()).stream().anyMatch(piece -> piece.isValidMove(findKing(color).getPosition()));
+        return pieces.get(color.opposite()).stream().anyMatch(piece -> isMoveAllowed(piece, findKing(color).getPosition()));
     }
 
     public boolean isPieceMovementAvoidingCheck(Piece piece, Position to) {
-        if (piece == null || !pieces.get(piece.getColor()).contains(piece) || !piece.isValidMove(to)) return false;
+        if (piece == null || !pieces.get(piece.getColor()).contains(piece) || !isMoveAllowed(piece, to)) return false;
         Position original = piece.getPosition();
 
         Optional<Piece> target = piece instanceof Pawn pawn && isEnPassant(original, to, pawn.getColor()) ? getPawnForEnPassant(pawn, to).map(Piece.class::cast) : findPieceAt(to);
@@ -128,7 +128,7 @@ public class Board extends BoardEvents {
     }
 
     public boolean isNotSafePositionForKing(King king, Position position) {
-        return pieces.get(king.getColor().opposite()).stream().anyMatch(piece -> piece.isValidMove(position) && (piece instanceof Pawn pawn && pawn.getPosition().file() != position.file()));
+        return pieces.get(king.getColor().opposite()).stream().anyMatch(piece -> isMoveAllowed(piece, position) && (piece instanceof Pawn pawn && pawn.getPosition().file() != position.file()));
     }
 
     public boolean isPawnTwoRowFirstMove(Position from, Position to) {
