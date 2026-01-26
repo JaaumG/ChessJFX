@@ -37,6 +37,17 @@ public class Board implements Cloneable {
         turn = WHITE;
     }
 
+    private Board(Board board) {
+        this.pieces = new HashMap<>();
+        this.turn = board.turn;
+        this.eventPublisher = new EventPublisher();
+        for (Piece piece : board.getPieces()) {
+            Piece clone = piece.clone();
+            pieces.computeIfAbsent(clone.getColor(), k -> new HashSet<>()).add(clone);
+        }
+    }
+
+
     private void setupInitialPositions() {
         pieces = Set.of(
                 new Rook(WHITE, A1),
@@ -236,15 +247,6 @@ public class Board implements Cloneable {
 
     @Override
     public Board clone() {
-        try {
-            Board clone = (Board) super.clone();
-            clone.pieces = pieces.entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, e -> new HashSet<>(e.getValue().stream().map(Piece::clone).collect(Collectors.toSet()))));
-            clone.turn = turn;
-            clone.enPassantAvailablePosition = enPassantAvailablePosition;
-            clone.eventPublisher = new EventPublisher();
-            return clone;
-        } catch (CloneNotSupportedException e) {
-            throw new AssertionError();
-        }
+        return new Board(this);
     }
 }
