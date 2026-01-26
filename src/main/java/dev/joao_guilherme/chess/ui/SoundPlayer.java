@@ -18,7 +18,7 @@ public class SoundPlayer {
     }
 
     public static void playCastling() {
-        new SoundPlayer().play("/sounds/castling.mp3");
+        new SoundPlayer().play("/sounds/castle.mp3");
     }
 
     public static void playGameEnd() {
