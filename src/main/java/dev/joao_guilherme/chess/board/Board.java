@@ -161,6 +161,10 @@ public class Board extends BoardEvents {
                 .flatMap(Set::stream).collect(Collectors.toSet());
     }
 
+    public Set<Piece> getPieces(Color color) {
+        return pieces.get(color);
+    }
+
     public List<Position> getPositions() {
         return Arrays.stream(positions).flatMap(Arrays::stream).toList();
     }
