@@ -31,7 +31,7 @@ public class BoardView extends GridPane {
         setWidth(8 * PositionView.TILE_SIZE);
         setHeight(8 * PositionView.TILE_SIZE);
 
-        board.addPromotionEvent(piece -> new PromotionPieceDialog(piece.getPosition()).showAndWait().orElse(null));
+        board.addPromotionRequestEvent(piece -> new PromotionPieceDialog(piece.getPosition()).showAndWait().orElse(null));
         board.addPieceCapturedEvent(event -> {
             squares.get(event.position()).getChildren().removeIf(PieceView.class::isInstance);
             squares.get(event.capturedPiece().getPosition()).getChildren().removeIf(PieceView.class::isInstance);
@@ -49,6 +49,11 @@ public class BoardView extends GridPane {
             squares.get(event.rookPreviousPosition()).getChildren().removeIf(PieceView.class::isInstance);
             squares.get(event.king().getPosition()).getChildren().add(new PieceView(event.king()));
             squares.get(event.rook().getPosition()).getChildren().add(new PieceView(event.rook()));
+        });
+        board.addPromotionEvent(event -> {
+            squares.get(event.previousPosition()).getChildren().removeIf(PieceView.class::isInstance);
+            squares.get(event.promotedPosition()).getChildren().removeIf(PieceView.class::isInstance);
+            squares.get(event.promotedPosition()).getChildren().add(new PieceView(event.promotedPiece()));
         });
     }
 
