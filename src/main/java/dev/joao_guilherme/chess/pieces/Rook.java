@@ -1,5 +1,6 @@
 package dev.joao_guilherme.chess.pieces;
 
+import dev.joao_guilherme.chess.board.Board;
 import dev.joao_guilherme.chess.board.Position;
 import dev.joao_guilherme.chess.enums.Color;
 
@@ -12,7 +13,7 @@ public final class Rook extends Piece {
     }
 
     @Override
-    public boolean isValidMove(Position newPosition) {
-        return isStraight(this.position, newPosition);
+    public boolean isValidMove(Board board, Position newPosition) {
+        return isStraight(this.position, newPosition) && noPieceInBetween(board, position, newPosition) && noSameColorPieceAtTarget(board, color, newPosition);
     }
 }
