@@ -111,14 +111,14 @@ public class Board extends BoardEvents {
     }
 
     public boolean isKingInCheck(Color color) {
-        return pieces.get(color.opposite()).stream().anyMatch(piece -> isMoveAllowed(piece, findKing(color).getPosition()));
+        return pieces.get(color.opposite()).stream().anyMatch(piece -> piece.isValidMove(this, findKing(color).getPosition()));
     }
 
     public boolean isPieceMovementAvoidingCheck(Piece piece, Position to) {
-        if (piece == null || !pieces.get(piece.getColor()).contains(piece) || !isMoveAllowed(piece, to)) return false;
+        if (piece == null || !pieces.get(piece.getColor()).contains(piece) || !piece.isValidMove(this, to)) return false;
         Position original = piece.getPosition();
 
-        Optional<Piece> target = piece instanceof Pawn pawn && isEnPassant(original, to, pawn.getColor()) ? getPawnForEnPassant(pawn, to).map(Piece.class::cast) : findPieceAt(to);
+        Optional<Piece> target = piece instanceof Pawn pawn && isEnPassant(this, original, to, pawn.getColor()) ? getPawnForEnPassant(pawn, to).map(Piece.class::cast) : findPieceAt(to);
         target.ifPresent(t -> pieces.get(t.getColor()).remove(t));
 
         piece.setPosition(to);
@@ -128,10 +128,6 @@ public class Board extends BoardEvents {
         target.ifPresent(t -> pieces.get(t.getColor()).add(t));
 
         return !kingInCheck;
-    }
-
-    public boolean isNotSafePositionForKing(King king, Position position) {
-        return pieces.get(king.getColor().opposite()).stream().anyMatch(piece -> isMoveAllowed(piece, position) && (piece instanceof Pawn pawn && pawn.getPosition().file() != position.file()));
     }
 
     public boolean isPawnTwoRowFirstMove(Position from, Position to) {
@@ -150,11 +146,11 @@ public class Board extends BoardEvents {
     }
 
     public boolean capturePiece(Piece piece, Piece capturedPiece) {
-        return piece.moveTo(capturedPiece.getPosition()) && pieces.get(capturedPiece.getColor()).remove(capturedPiece);
+        return piece.moveTo(this, capturedPiece.getPosition()) && pieces.get(capturedPiece.getColor()).remove(capturedPiece);
     }
 
     public boolean capturePieceEnPassant(Pawn pawn, Piece capturedPiece, Position to) {
-        return pawn.moveTo(to) && pieces.get(capturedPiece.getColor()).remove(capturedPiece);
+        return pawn.moveTo(this, to) && pieces.get(capturedPiece.getColor()).remove(capturedPiece);
     }
 
     public Set<Piece> getPieces() {
@@ -169,78 +165,33 @@ public class Board extends BoardEvents {
     public List<Position> getPositionsAvailableForPiece(Piece piece) {
         return getPositions().stream()
                 .filter(to -> isPieceMovementAvoidingCheck(piece, to))
-                .filter(isValidMovementForKing(piece))
-                .filter(isValidMovementForPawn(piece))
                 .toList();
-    }
-
-    private boolean isMoveAllowed(Piece piece, Position to) {
-        return piece.isValidMove(to) && noSameColorPieceAtTarget(piece.getColor(), to) && switch (piece) {
-            case Knight _ -> true;
-            case Pawn pawn -> {
-                if (isOnSameColumn(pawn.getPosition(), to)) yield noPieceAtTarget(to);
-                else if (isEnPassant(pawn.getPosition(), to, pawn.getColor())) yield noPieceAtTarget(to);
-                else yield !noPieceAtTarget(to);
-            }
-            case King _ -> (!isCastling(piece.getPosition(), to) || noPieceAtTarget(to)) && noPieceInBetween(piece.getPosition(), to);
-            default -> noPieceInBetween(piece.getPosition(), to);
-        };
-    }
-
-    private Predicate<Position> isValidMovementForKing(Piece piece) {
-        if (!(piece instanceof King king)) {
-            return _ -> true;
-        }
-        return pos -> {
-            if (isNotSafePositionForKing(king, pos)) return false;
-            if (isCastling(king.getPosition(), pos)) return isCastlingAllowed(king, pos);
-            return true;
-        };
-    }
-
-    private Predicate<Position> isValidMovementForPawn(Piece piece) {
-        if (!(piece instanceof Pawn pawn)) {
-            return _ -> true;
-        }
-        return pos -> {
-            if (isEnPassant(pawn.getPosition(), pos, pawn.getColor())) {
-                return enPassantAvailablePosition != null
-                        && enPassantAvailablePosition.equals(pos)
-                        && getPawnForEnPassant(pawn, pos).isPresent();
-            }
-            return true;
-        };
     }
 
     public boolean movePiece(Position from, Position to) {
         Piece piece = getPieceAt(from);
         if (piece.getColor() != turn || !isPieceMovementAvoidingCheck(piece, to)) return false;
         Optional<Piece> target = findPieceAt(to);
-        if (piece instanceof King king) {
-            if (isNotSafePositionForKing(king, to)) return false;
-            if (isCastling(from, to)) return performCastlingMove(king, to);
-        }
+        if (piece instanceof King king && isCastling(king, this, from, to)) return performCastlingMove(king, to);
         if (piece instanceof Pawn pawn) {
             if (isPawnTwoRowFirstMove(from, to)) enPassantAvailablePosition = Position.of(from.file(), (from.rank() + to.rank()) / 2);
-            else if (isEnPassant(from, to, pawn.getColor())) return performEnPassantMove(pawn, from, to);
+            else if (isEnPassant(this, from, to, pawn.getColor())) return performEnPassantMove(pawn, from, to);
             else enPassantAvailablePosition = null;
             if (to.rank() == (pawn.getColor() == WHITE ? 8 : 1)) return promote(pawn, to);
         }
         if (target.isPresent() && capturePiece(piece, target.get())) notifyPieceCaptured(from, to, piece, target.get());
-        else if (piece.moveTo(to)) notifyMove(from, to, piece);
+        else if (piece.moveTo(this, to)) notifyMove(from, to, piece);
         nextTurn();
         return true;
     }
 
     private boolean performCastlingMove(King king, Position to) {
-        boolean kingSide = to.file() == 'g';
-        Position rookTarget = Position.of((kingSide ? 'F' : 'D'), king.getPosition().rank());
         return getRookForCastling(king, to)
-                .filter(_ -> isCastlingAllowed(king, to))
                 .map(rook -> {
-                    rook.moveTo(rookTarget);
-                    king.moveTo(to);
-                    notifyKingCastled(king);
+                    Position kingStart = king.getPosition();
+                    Position rookStart = rook.getPosition();
+                    king.castle(this, to, rook);
+                    notifyKingCastled(king, rook, kingStart, rookStart);
                     nextTurn();
                     return true;
                 }).orElse(false);
@@ -271,19 +222,11 @@ public class Board extends BoardEvents {
                 .filter(Rook.class::isInstance)
                 .map(Rook.class::cast)
                 .filter(rook -> rook.getColor() == king.getColor())
-                .filter(rook -> noPieceInBetween(king.getPosition(), rook.getPosition()));
+                .filter(rook -> noPieceInBetween(this, king.getPosition(), rook.getPosition()));
     }
 
     public Color getTurn() {
         return turn;
-    }
-
-    private boolean isCastlingAllowed(King king, Position to) {
-        boolean kingSide = to.file() == 'g';
-        Position rookTarget = Position.of((kingSide ? 'F' : 'D'), king.getPosition().rank());
-        return getRookForCastling(king, to)
-                .filter(not(Rook::hasMoved))
-                .filter(_ -> isPieceMovementAvoidingCheck(king, rookTarget)).isPresent();
     }
 
     private void nextTurn() {
@@ -308,48 +251,8 @@ public class Board extends BoardEvents {
         }
     }
 
-    public boolean noPieceInBetween(Position from, Position to) {
-        return isDiagonal(from, to) ? noPieceInBetweenDiagonal(from, to) : noPieceInBetweenStraight(from, to);
-    }
-
-    private boolean noPieceInBetweenDiagonal(Position from, Position to) {
-        return isDiagonal(from, to) && noPieceInBetween(from, to, true);
-    }
-
-    private boolean noPieceInBetweenStraight(Position from, Position to) {
-        return isStraight(from, to) && noPieceInBetween(from, to, false);
-    }
-
-    private boolean noPieceInBetween(Position from, Position to, boolean diagonal) {
-        if (to == null || from == null || from.equals(to)) return false;
-        int rowDir = Integer.signum(to.getRow() - from.getRow());
-        int colDir = Integer.signum(to.getColumn() - from.getColumn());
-        int currentRow = from.getRow() + rowDir;
-        int currentCol = from.getColumn() + colDir;
-
-        while (currentRow != to.getRow() || currentCol != to.getColumn()) {
-            if (diagonal && Math.abs(currentRow - from.getRow()) != Math.abs(currentCol - from.getColumn())) break;
-            Position pos = new Position(currentCol, currentRow);
-            boolean hasPieceSameColor = findPieceAt(pos)
-                    .map(piece -> piece.isSameColor(getPieceAt(from)))
-                    .isPresent();
-            if (hasPieceSameColor) return false;
-            currentRow += rowDir;
-            currentCol += colDir;
-        }
-        return true;
-    }
-
-    public boolean noSameColorPieceAtTarget(Color color, Position to) {
-        return findPieceAt(to).map(piece -> piece.isNotSameColor(color)).orElse(true);
-    }
-
-    public boolean noPieceAtTarget(Position to) {
-        return findPieceAt(to).isEmpty();
-    }
-
-    public boolean isEnPassant(Position from, Position to, Color color) {
-        return Movement.isEnPassant(from, to, color) && enPassantAvailablePosition != null && enPassantAvailablePosition.equals(to);
+    public boolean isEnPassantLocation(Position from) {
+        return enPassantAvailablePosition != null && enPassantAvailablePosition.equals(from);
     }
 
     public King findKing(Color color) {
