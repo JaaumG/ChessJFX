@@ -12,7 +12,7 @@ import java.util.function.Function;
 public class BoardEvents {
 
     private Consumer<CaptureEvent> capturePieceEvent;
-    private Consumer<CastlingEvent> castlingEvent;
+    private Consumer<CastleEvent> castlingEvent;
     private Function<Piece, Class<? extends Piece>> promotionRequestEvent;
     private Consumer<MoveEvent> moveEvent;
     private Consumer<PromoteEvent> promoteEvent;
@@ -41,12 +41,12 @@ public class BoardEvents {
         promoteEvent.accept(new PromoteEvent(pawn, promotedPiece, previousPosition, promotedPosition));
     }
 
-    public void addCastlingEvent(Consumer<CastlingEvent> event) {
+    public void addCastlingEvent(Consumer<CastleEvent> event) {
         this.castlingEvent = event;
     }
 
     public void notifyKingCastled(King king, Rook rook, Position rookPreviousPosition, Position kingPreviousPosition) {
-        castlingEvent.accept(new CastlingEvent(king, rook, rookPreviousPosition, kingPreviousPosition));
+        castlingEvent.accept(new CastleEvent(king, rook, rookPreviousPosition, kingPreviousPosition));
     }
 
     public void addMoveEvent(Consumer<MoveEvent> event) {
