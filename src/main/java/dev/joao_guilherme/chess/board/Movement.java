@@ -84,14 +84,12 @@ public abstract class Movement {
         if (!isSideways(from, to)) return false;
         if (distance(from, to) != 2) return false;
         boolean kingSide = to.file() == 'g';
-        Position rookTarget = Position.of((kingSide ? 'F' : 'D'), from.rank());
         return board.findPieceAt(Position.of((kingSide ? 'H' : 'A'), from.rank()))
                 .filter(Rook.class::isInstance)
                 .map(Rook.class::cast)
                 .filter(rook -> rook.getColor() == king.getColor())
                 .filter(rook -> noPieceInBetween(board, from, rook.getPosition()))
-                .filter(not(Rook::hasMoved))
-                .filter(_ -> board.isPieceMovementAvoidingCheck(king, rookTarget)).isPresent();
+                .filter(not(Rook::hasMoved)).isPresent();
     }
 
     public static boolean isEnPassant(Board board, Position from, Position to, Color color) {
@@ -116,7 +114,7 @@ public abstract class Movement {
     }
 
     public static boolean isCapturingMove(Board board, Piece piece, Position to) {
-        return hasOpponentPieceAtTarget(board, piece.getColor(), to) && board.isPieceMovementAvoidingCheck(piece, to);
+        return hasOpponentPieceAtTarget(board, piece.getColor(), to);
     }
 
     public static boolean isPawnTwoRowFirstMove(Position from, Position to) {

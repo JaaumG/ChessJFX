@@ -114,17 +114,9 @@ public class Board implements Cloneable {
     public boolean isPieceMovementAvoidingCheck(Piece piece, Position to) {
         if (piece == null || !pieces.get(piece.getColor()).contains(piece) || !piece.isValidMove(this, to)) return false;
         Position original = piece.getPosition();
-
-        Optional<Piece> target = piece instanceof Pawn pawn && isEnPassant(this, original, to, pawn.getColor()) ? getPawnForEnPassant(pawn, to).map(Piece.class::cast) : findPieceAt(to);
-        target.ifPresent(t -> pieces.get(t.getColor()).remove(t));
-
-        piece.setPosition(to);
-        boolean kingInCheck = findKing(piece.getColor()).isInCheck(this);
-
-        piece.setPosition(original);
-        target.ifPresent(t -> pieces.get(t.getColor()).add(t));
-
-        return !kingInCheck;
+        Board clone = clone();
+        clone.movePiece(original, to);
+        return !clone.findKing(piece.getColor()).isInCheck(clone);
     }
 
     public Piece getPieceAt(Position position) {
@@ -200,7 +192,6 @@ public class Board implements Cloneable {
 
     private boolean performEnPassantMove(Pawn pawn, Position from, Position to) {
         return getPawnForEnPassant(pawn, to)
-                .filter(_ -> isPieceMovementAvoidingCheck(pawn, to))
                 .filter(piece -> capturePieceEnPassant(pawn, piece, to))
                 .map(piece -> {
                     eventPublisher.publish(new CaptureEvent(from, to, pawn, piece));
