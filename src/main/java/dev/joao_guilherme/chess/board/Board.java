@@ -75,7 +75,7 @@ public class Board extends BoardEvents {
 
     //TODO 25/01/2026: - Criar eventos para cheque e cheque-mate
     public boolean isCheckMate(Color color) {
-        if (!isKingInCheck(color)) return false;
+        if (!findKing(color).isInCheck(this)) return false;
         for (Piece piece : pieces.get(color)) {
             if (!piece.getPossibleMoves(this).isEmpty()) {
                 return false;
@@ -86,7 +86,7 @@ public class Board extends BoardEvents {
 
     //TODO 24/01/2026: - Identificar quando não for mais possivel fazer checkmate
     public boolean isStaleMate(Color color) {
-        return !isKingInCheck(color) && pieces.get(color).stream().allMatch(piece -> piece.getPossibleMoves(this).isEmpty());
+        return !findKing(color).isInCheck(this) && pieces.get(color).stream().allMatch(piece -> piece.getPossibleMoves(this).isEmpty());
     }
 
     public boolean promote(Pawn pawn, Position promotionPosition) {
@@ -106,10 +106,6 @@ public class Board extends BoardEvents {
         }
     }
 
-    public boolean isKingInCheck(Color color) {
-        return pieces.get(color.opposite()).stream().anyMatch(piece -> piece.isValidMove(this, findKing(color).getPosition()));
-    }
-
     public boolean isPieceMovementAvoidingCheck(Piece piece, Position to) {
         if (piece == null || !pieces.get(piece.getColor()).contains(piece) || !piece.isValidMove(this, to)) return false;
         Position original = piece.getPosition();
@@ -118,7 +114,7 @@ public class Board extends BoardEvents {
         target.ifPresent(t -> pieces.get(t.getColor()).remove(t));
 
         piece.setPosition(to);
-        boolean kingInCheck = isKingInCheck(piece.getColor());
+        boolean kingInCheck = findKing(piece.getColor()).isInCheck(this);
 
         piece.setPosition(original);
         target.ifPresent(t -> pieces.get(t.getColor()).add(t));
