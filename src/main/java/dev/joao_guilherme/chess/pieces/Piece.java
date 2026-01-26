@@ -4,6 +4,7 @@ import dev.joao_guilherme.chess.board.Board;
 import dev.joao_guilherme.chess.board.Position;
 import dev.joao_guilherme.chess.enums.Color;
 
+import java.util.List;
 import java.util.Objects;
 
 public abstract sealed class Piece permits Bishop, King, Knight, Queen, Pawn, Rook {
@@ -32,6 +33,16 @@ public abstract sealed class Piece permits Bishop, King, Knight, Queen, Pawn, Ro
             return true;
         }
         return false;
+    }
+
+    public List<Position> getPossibleMoves(Board board) {
+        return board.getPositions().stream()
+                .filter(to -> board.isPieceMovementAvoidingCheck(this, to))
+                .toList();
+    }
+
+    public int getValue() {
+        return value;
     }
 
     public Color getColor() {
