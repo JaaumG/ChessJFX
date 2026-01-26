@@ -65,7 +65,7 @@ public class BoardView extends GridPane {
     }
 
     public void showAvailablePositions(Piece piece, boolean show) {
-        List<Position> positionsAvailableForPiece = board.getPositionsAvailableForPiece(piece);
+        List<Position> positionsAvailableForPiece = piece.getPossibleMoves(board);
         squares.forEach((position, positionView) -> positionView.setHighlighted(positionsAvailableForPiece.contains(position) && show));
     }
 
