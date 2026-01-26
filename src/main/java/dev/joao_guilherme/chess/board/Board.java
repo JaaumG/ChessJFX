@@ -1,6 +1,7 @@
 package dev.joao_guilherme.chess.board;
 
 import dev.joao_guilherme.chess.enums.Color;
+import dev.joao_guilherme.chess.events.*;
 import dev.joao_guilherme.chess.pieces.*;
 
 import java.util.*;
@@ -90,16 +91,19 @@ public class Board {
         return !findKing(color).isInCheck(this) && pieces.get(color).stream().allMatch(piece -> piece.getPossibleMoves(this).isEmpty());
     }
 
-    public boolean promote(Pawn pawn, Position promotionPosition) {
-        Class<? extends Piece> tClass = requestPiecePromoted(pawn);
-        if (tClass == null) return false;
-        Position pawnPreviousPosition = pawn.getPosition();
-        findPieceAt(promotionPosition).ifPresent(piece -> capturePiece(pawn, piece));
+    private void checkPromotion(Piece piece, Position to) {
+        if (piece instanceof Pawn pawn && pawn.reachedLastRank(to)) {
+            eventPublisher.publish(new PromotionRequestEvent(pawn, to));
+        }
+    }
+
+    public boolean promote(Position promotionPosition, Class<? extends Piece> tClass) {
         try {
-            Piece promotedPiece = tClass.getConstructor(Color.class, Position.class).newInstance(pawn.getColor(), promotionPosition);
+            Piece promotedPiece = tClass.getConstructor(Color.class, Position.class).newInstance(turn, promotionPosition);
             pieces.get(promotedPiece.getColor()).add(promotedPiece);
+            Pawn pawn = (Pawn) getPieceAt(promotionPosition);
             pieces.get(pawn.getColor()).remove(pawn);
-            notifyPromotionEvent(pawn, promotedPiece, pawnPreviousPosition, promotionPosition);
+            eventPublisher.publish(new PromoteEvent(pawn, promotedPiece, promotionPosition));
             nextTurn();
             return true;
         } catch (Exception e) {
@@ -137,7 +141,7 @@ public class Board {
     public boolean capturePiece(Piece piece, Piece capturedPiece) {
         Position from = piece.getPosition();
         if (piece.moveTo(this, capturedPiece.getPosition()) && pieces.get(capturedPiece.getColor()).remove(capturedPiece)) {
-            notifyPieceCaptured(from, piece.getPosition(), piece, capturedPiece);
+            eventPublisher.publish(new CaptureEvent(from, piece.getPosition(), piece, capturedPiece));
             nextTurn();
             return true;
         }
@@ -169,12 +173,12 @@ public class Board {
             if (isPawnTwoRowFirstMove(from, to)) enPassantAvailablePosition = Position.of(from.file(), (from.rank() + to.rank()) / 2);
             else if (isEnPassant(this, from, to, pawn.getColor())) return performEnPassantMove(pawn, from, to);
             else enPassantAvailablePosition = null;
-            if (to.rank() == (pawn.getColor() == WHITE ? 8 : 1)) return promote(pawn, to);
         }
         if (isCapturingMove(this, piece, to)) return capturePiece(piece, getPieceAt(to));
         if (piece.moveTo(this, to)) {
-            notifyMove(from, to, piece);
+            eventPublisher.publish(new MoveEvent(from, to, piece));
             nextTurn();
+            checkPromotion(piece, to);
             return true;
         }
         return false;
@@ -186,7 +190,7 @@ public class Board {
                     Position kingStart = king.getPosition();
                     Position rookStart = rook.getPosition();
                     if (king.castle(this, to, rook)) {
-                        notifyKingCastled(king, rook, kingStart, rookStart);
+                        eventPublisher.publish(new CastleEvent(king, rook, kingStart, rookStart));
                         nextTurn();
                         return true;
                     }
@@ -199,7 +203,7 @@ public class Board {
                 .filter(_ -> isPieceMovementAvoidingCheck(pawn, to))
                 .filter(piece -> capturePieceEnPassant(pawn, piece, to))
                 .map(piece -> {
-                    notifyPieceCaptured(from, to, pawn, piece);
+                    eventPublisher.publish(new CaptureEvent(from, to, pawn, piece));
                     enPassantAvailablePosition = null;
                     nextTurn();
                     return true;
