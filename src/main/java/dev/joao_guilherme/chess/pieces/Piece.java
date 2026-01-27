@@ -70,6 +70,18 @@ public abstract sealed class Piece implements Cloneable permits Bishop, King, Kn
         return !this.color.equals(color);
     }
 
+    public int getMoveCount() {
+        return moveCount;
+    }
+
+    public void setMoveCount(int moveCount) {
+        this.moveCount = moveCount;
+    }
+
+    public void incrementMoveCount() {
+        this.moveCount++;
+    }
+
     @Override
     public String toString() {
         return "%s-%s".formatted(name, position);
