@@ -11,7 +11,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-import static dev.joao_guilherme.chess.board.Movement.isCapturingMove;
+import static dev.joao_guilherme.chess.movements.Movement.isCapturingMove;
 
 
 public class ChessEngine {

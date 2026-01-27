@@ -7,7 +7,7 @@ import dev.joao_guilherme.chess.pieces.*;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static dev.joao_guilherme.chess.board.Movement.*;
+import static dev.joao_guilherme.chess.movements.Movement.*;
 import static dev.joao_guilherme.chess.board.Position.*;
 import static dev.joao_guilherme.chess.enums.Color.BLACK;
 import static dev.joao_guilherme.chess.enums.Color.WHITE;

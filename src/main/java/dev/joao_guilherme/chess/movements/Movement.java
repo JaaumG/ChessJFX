@@ -1,5 +1,7 @@
-package dev.joao_guilherme.chess.board;
+package dev.joao_guilherme.chess.movements;
 
+import dev.joao_guilherme.chess.board.Board;
+import dev.joao_guilherme.chess.board.Position;
 import dev.joao_guilherme.chess.enums.Color;
 import dev.joao_guilherme.chess.pieces.King;
 import dev.joao_guilherme.chess.pieces.Piece;
@@ -13,7 +15,7 @@ import static java.util.function.Predicate.not;
 
 public abstract class Movement {
 
-    public static boolean noPieceInBetween(Board board,Position from, Position to) {
+    public static boolean noPieceInBetween(Board board, Position from, Position to) {
         return isDiagonal(from, to) ? noPieceInBetweenDiagonal(board,from, to) : noPieceInBetweenStraight(board, from, to);
     }
 

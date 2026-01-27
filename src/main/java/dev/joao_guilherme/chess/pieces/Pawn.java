@@ -4,7 +4,7 @@ import dev.joao_guilherme.chess.board.Board;
 import dev.joao_guilherme.chess.board.Position;
 import dev.joao_guilherme.chess.enums.Color;
 
-import static dev.joao_guilherme.chess.board.Movement.*;
+import static dev.joao_guilherme.chess.movements.Movement.*;
 
 public final class Pawn extends Piece {
 

@@ -1,4 +1,6 @@
-package dev.joao_guilherme.chess.board;
+package dev.joao_guilherme.chess.movements;
+
+import dev.joao_guilherme.chess.board.Position;
 
 import java.util.ArrayList;
 import java.util.Collections;
