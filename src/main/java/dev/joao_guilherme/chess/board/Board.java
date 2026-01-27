@@ -28,6 +28,7 @@ public class Board implements Cloneable {
     };
     private Position enPassantAvailablePosition;
     private Map<Color, Set<Piece>> pieces;
+    private Map<Position, Piece> pieceByPosition;
     private Color turn;
     private EventPublisher eventPublisher;
 
@@ -39,11 +40,13 @@ public class Board implements Cloneable {
 
     private Board(Board board) {
         this.pieces = new HashMap<>();
+        this.pieceByPosition = new HashMap<>();
         this.turn = board.turn;
         this.eventPublisher = new EventPublisher();
         for (Piece piece : board.getPieces()) {
             Piece clone = piece.clone();
             pieces.computeIfAbsent(clone.getColor(), k -> new HashSet<>()).add(clone);
+            pieceByPosition.put(clone.getPosition(), clone);
         }
     }
 
@@ -83,6 +86,7 @@ public class Board implements Cloneable {
                 new Pawn(BLACK, G7),
                 new Pawn(BLACK, H7)
         ).stream().collect(Collectors.groupingBy(Piece::getColor, Collectors.toSet()));
+        pieceByPosition = pieces.values().stream().flatMap(Set::stream).collect(Collectors.toMap(Piece::getPosition, piece -> piece));
     }
 
     //TODO 25/01/2026: - Criar eventos para cheque e cheque-mate
@@ -160,10 +164,7 @@ public class Board implements Cloneable {
     }
 
     public Optional<Piece> findPieceAt(Position position) {
-        return pieces.values().stream()
-                .flatMap(Set::stream)
-                .filter(piece -> piece.getPosition().equals(position))
-                .findFirst();
+        return pieceByPosition.containsKey(position) ? Optional.of(pieceByPosition.get(position)) : Optional.empty();
     }
 
     public boolean capturePiece(Piece piece, Piece capturedPiece) {
@@ -171,6 +172,8 @@ public class Board implements Cloneable {
         if (capturedPiece == null || capturedPiece.getColor() == piece.getColor()) return false;
         if (capturedPiece instanceof King) return false;
         if (piece.moveTo(this, capturedPiece.getPosition()) && pieces.get(capturedPiece.getColor()).remove(capturedPiece)) {
+            pieceByPosition.remove(capturedPiece.getPosition());
+            pieceByPosition.put(piece.getPosition(), piece);
             eventPublisher.publish(new CaptureEvent(from, piece.getPosition(), piece, capturedPiece));
             nextTurn();
             return true;
@@ -179,7 +182,12 @@ public class Board implements Cloneable {
     }
 
     public boolean capturePieceEnPassant(Pawn pawn, Piece capturedPiece, Position to) {
-        return pawn.moveTo(this, to) && pieces.get(capturedPiece.getColor()).remove(capturedPiece);
+        if (pawn.moveTo(this, to) && pieces.get(capturedPiece.getColor()).remove(capturedPiece)) {
+            pieceByPosition.remove(capturedPiece.getPosition());
+            pieceByPosition.put(pawn.getPosition(), pawn);
+            return true;
+        }
+        return false;
     }
 
     public Set<Piece> getPieces() {
@@ -207,6 +215,8 @@ public class Board implements Cloneable {
         }
         if (isCapturingMove(this, piece, to)) return capturePiece(piece, getPieceAt(to));
         if (piece.moveTo(this, to)) {
+            pieceByPosition.remove(from);
+            pieceByPosition.put(to, piece);
             eventPublisher.publish(new MoveEvent(from, to, piece));
             nextTurn();
             return true;
@@ -239,6 +249,10 @@ public class Board implements Cloneable {
                     Position kingStart = king.getPosition();
                     Position rookStart = rook.getPosition();
                     if (king.castle(this, to, rook)) {
+                        pieceByPosition.remove(kingStart);
+                        pieceByPosition.remove(rookStart);
+                        pieceByPosition.put(king.getPosition(), king);
+                        pieceByPosition.put(rook.getPosition(), rook);
                         eventPublisher.publish(new CastleEvent(king, rook, kingStart, rookStart));
                         nextTurn();
                         return true;
