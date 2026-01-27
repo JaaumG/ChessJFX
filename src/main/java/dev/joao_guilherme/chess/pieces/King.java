@@ -1,10 +1,16 @@
 package dev.joao_guilherme.chess.pieces;
 
 import dev.joao_guilherme.chess.board.Board;
+import dev.joao_guilherme.chess.board.MoveLookups;
+import dev.joao_guilherme.chess.board.Movement;
 import dev.joao_guilherme.chess.board.Position;
 import dev.joao_guilherme.chess.enums.Color;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import static dev.joao_guilherme.chess.board.Movement.*;
+import static java.util.function.Predicate.not;
 
 public final class King extends Piece {
 
@@ -15,6 +21,33 @@ public final class King extends Piece {
     private King(King piece) {
         this(piece.color, piece.position);
         this.moveCount = piece.moveCount;
+    }
+
+    @Override
+    public List<Position> getPossibleMoves(Board board) {
+        List<Position> candidates = MoveLookups.getKingMoves(this.position);
+        List<Position> validMoves = new ArrayList<>();
+
+        for (Position target : candidates) {
+            if (Movement.noSameColorPieceAtTarget(board, this.color, target) && board.isPieceMovementAvoidingCheck(this, target)) {
+                validMoves.add(target);
+            }
+        }
+
+        if (!hasMoved()) {
+            addCastlingMoveIfValid(board, validMoves, 'g');
+            addCastlingMoveIfValid(board, validMoves, 'c');
+        }
+
+        return validMoves;
+    }
+
+    private void addCastlingMoveIfValid(Board board, List<Position> moves, char fileChar) {
+        Position target = Position.of(fileChar, this.position.rank());
+        if (Movement.isCastling(this, board, this.position, target) && board.isPieceMovementAvoidingCheck(this, target)) {
+            moves.add(target);
+        }
+
     }
 
     @Override
@@ -29,7 +62,7 @@ public final class King extends Piece {
     }
 
     public boolean isInCheck(Board board) {
-        return board.getPieces(this.color.opposite()).stream().anyMatch(piece -> piece.isValidMove(board, this.position));
+        return board.getPieces(this.color.opposite()).stream().filter(not(King.class::isInstance)).anyMatch(piece -> piece.isValidMove(board, this.position));
     }
 
     public boolean castle(Board board, Position newPosition, Rook rook) {
