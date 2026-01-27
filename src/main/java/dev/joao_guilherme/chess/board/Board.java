@@ -47,7 +47,6 @@ public class Board implements Cloneable {
         }
     }
 
-
     private void setupInitialPositions() {
         pieces = Set.of(
                 new Rook(WHITE, A1),
@@ -128,8 +127,10 @@ public class Board implements Cloneable {
         if (piece == null || !pieces.get(piece.getColor()).contains(piece) || !piece.isValidMove(this, to)) return false;
         Position original = piece.getPosition();
         Board clone = clone();
-        clone.movePiece(original, to);
-        return !clone.findKing(piece.getColor()).isInCheck(clone);
+        if (clone.movePieceWithoutCheckValidation(original, to)) {
+            return !clone.findKing(piece.getColor()).isInCheck(clone);
+        }
+        return false;
     }
 
     public Piece getPieceAt(Position position) {
@@ -174,13 +175,32 @@ public class Board implements Cloneable {
 
     public boolean movePiece(Position from, Position to) {
         Piece piece = getPieceAt(from);
+        if (piece.getColor() != turn || !isPieceMovementAvoidingCheck(piece, to)) return false;
+        if (piece instanceof King king && isCastling(king, this, from, to)) return performCastlingMove(king, to);
+        if (piece instanceof Pawn pawn) {
+            if (isPawnTwoRowFirstMove(from, to)) enPassantAvailablePosition = Position.of(from.file(), (from.rank() + to.rank()) / 2);
+            else if (isEnPassant(this, from, to, pawn.getColor())) return performEnPassantMove(pawn, from, to);
+            else enPassantAvailablePosition = null;
+            if (pawn.reachedLastRank(to)) return promotion(pawn, from, to);
+        }
+        if (isCapturingMove(this, piece, to)) return capturePiece(piece, getPieceAt(to));
+        if (piece.moveTo(this, to)) {
+            eventPublisher.publish(new MoveEvent(from, to, piece));
+            nextTurn();
+            return true;
+        }
+        return false;
+    }
+
+    private boolean movePieceWithoutCheckValidation(Position from, Position to) {
+        Piece piece = getPieceAt(from);
         if (piece.getColor() != turn) return false;
         if (piece instanceof King king && isCastling(king, this, from, to)) return performCastlingMove(king, to);
         if (piece instanceof Pawn pawn) {
             if (isPawnTwoRowFirstMove(from, to)) enPassantAvailablePosition = Position.of(from.file(), (from.rank() + to.rank()) / 2);
             else if (isEnPassant(this, from, to, pawn.getColor())) return performEnPassantMove(pawn, from, to);
             else enPassantAvailablePosition = null;
-            if (pawn.reachedLastRank(to)) return promotion(pawn, to);
+            if (pawn.reachedLastRank(to)) return promotion(pawn, from, to);
         }
         if (isCapturingMove(this, piece, to)) return capturePiece(piece, getPieceAt(to));
         if (piece.moveTo(this, to)) {
@@ -252,6 +272,7 @@ public class Board implements Cloneable {
     public boolean isCheck(Color color) {
         return findKing(color).isInCheck(this);
     }
+
     @Override
     public Board clone() {
         return new Board(this);
