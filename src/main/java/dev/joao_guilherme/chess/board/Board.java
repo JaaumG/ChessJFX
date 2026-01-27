@@ -151,12 +151,25 @@ public class Board implements Cloneable {
 
     public boolean isPieceMovementAvoidingCheck(Piece piece, Position to) {
         if (piece == null || !pieces.get(piece.getColor()).contains(piece) || !piece.isValidMove(this, to)) return false;
-        Position original = piece.getPosition();
-        Board clone = clone();
-        if (clone.movePieceWithoutCheckValidation(original, to)) {
-            return !clone.findKing(piece.getColor()).isInCheck(clone);
+        Piece captured = pieceByPosition.get(to);
+        Position from = piece.getPosition();
+
+        pieceByPosition.remove(from);
+        pieceByPosition.put(to, piece);
+        piece.setPosition(to);
+        if (captured != null) pieces.get(captured.getColor()).remove(captured);
+
+        boolean safe = !findKing(piece.getColor()).isInCheck(this);
+
+        piece.setPosition(from);
+        pieceByPosition.put(from, piece);
+        pieceByPosition.remove(to);
+        if (captured != null) {
+            pieceByPosition.put(to, captured);
+            pieces.get(captured.getColor()).add(captured);
         }
-        return false;
+
+        return safe;
     }
 
     public Piece getPieceAt(Position position) {
@@ -217,25 +230,6 @@ public class Board implements Cloneable {
         if (piece.moveTo(this, to)) {
             pieceByPosition.remove(from);
             pieceByPosition.put(to, piece);
-            eventPublisher.publish(new MoveEvent(from, to, piece));
-            nextTurn();
-            return true;
-        }
-        return false;
-    }
-
-    private boolean movePieceWithoutCheckValidation(Position from, Position to) {
-        Piece piece = getPieceAt(from);
-        if (piece.getColor() != turn) return false;
-        if (piece instanceof King king && isCastling(king, this, from, to)) return performCastlingMove(king, to);
-        if (piece instanceof Pawn pawn) {
-            if (isPawnTwoRowFirstMove(from, to)) enPassantAvailablePosition = Position.of(from.file(), (from.rank() + to.rank()) / 2);
-            else if (isEnPassant(this, from, to, pawn.getColor())) return performEnPassantMove(pawn, from, to);
-            else enPassantAvailablePosition = null;
-            if (pawn.reachedLastRank(to)) return promotion(pawn, from, to);
-        }
-        if (isCapturingMove(this, piece, to)) return capturePiece(piece, getPieceAt(to));
-        if (piece.moveTo(this, to)) {
             eventPublisher.publish(new MoveEvent(from, to, piece));
             nextTurn();
             return true;
