@@ -123,6 +123,28 @@ public class Board implements Cloneable {
         }
     }
 
+    public void movePieceAndPromote(Position from, Position to, Class<? extends Piece> promotionPieceClass) {
+        Piece piece = findPieceAt(from).orElse(null);
+        if (piece == null || piece.getColor() != turn) return;
+
+        if (piece.moveTo(this, to)) {
+            if (findPieceAt(to).isPresent() && findPieceAt(to).get() != piece) {
+                pieces.get(turn.opposite()).remove(findPieceAt(to).get());
+            }
+            try {
+                Piece promotedPiece = promotionPieceClass
+                        .getConstructor(Color.class, Position.class)
+                        .newInstance(piece.getColor(), to);
+
+                pieces.get(piece.getColor()).remove(piece);
+                pieces.get(piece.getColor()).add(promotedPiece);
+                nextTurn();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
     public boolean isPieceMovementAvoidingCheck(Piece piece, Position to) {
         if (piece == null || !pieces.get(piece.getColor()).contains(piece) || !piece.isValidMove(this, to)) return false;
         Position original = piece.getPosition();
