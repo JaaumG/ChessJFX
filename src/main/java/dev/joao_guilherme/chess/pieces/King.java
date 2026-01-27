@@ -56,13 +56,17 @@ public final class King extends Piece {
         return  (basicMovement || (isCastling(this, board, this.position, newPosition) && !hasMoved()));
     }
 
+    private boolean isValidMoveWithoutCastling(Board board, Position newPosition) {
+        return ((isStraight(this.position, newPosition) && distance(this.position, newPosition) == 1) || (isDiagonal(this.position, newPosition) && distance(this.position, newPosition) == 2)) && noSameColorPieceAtTarget(board, color, newPosition);
+    }
+
     @Override
     public int getValue() {
         return 10;
     }
 
     public boolean isInCheck(Board board) {
-        return board.getPieces(this.color.opposite()).stream().filter(not(King.class::isInstance)).anyMatch(piece -> piece.isValidMove(board, this.position));
+        return board.getPieces(this.color.opposite()).stream().anyMatch(piece -> piece instanceof King king ? king.isValidMoveWithoutCastling(board, this.position) : piece.isValidMove(board, this.position));
     }
 
     public boolean castle(Board board, Position newPosition, Rook rook) {
