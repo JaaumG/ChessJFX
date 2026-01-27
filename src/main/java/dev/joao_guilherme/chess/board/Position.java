@@ -4,6 +4,17 @@ import java.util.Objects;
 
 public final class Position {
 
+    private static final Position[] CACHE = new Position[64];
+
+    static {
+        for (int rank = 1; rank <= 8; rank++) {
+            for (int file = 0; file < 8; file++) {
+                int index = (rank - 1) * 8 + file;
+                CACHE[index] = new Position(file, rank);
+            }
+        }
+    }
+
     public static final Position A1 = of('a', 1);
     public static final Position B1 = of('b', 1);
     public static final Position C1 = of('c', 1);
@@ -71,37 +82,29 @@ public final class Position {
     private final char file;
     private final int rank;
 
-    public Position(char file, int rank) {
-        this.file = Character.toLowerCase(file);
-        this.rank = rank;
-    }
-
-    public Position(int file, int rank) {
+    private Position(int file, int rank) {
         this.file = (char) ('a' + file);
         this.rank = rank;
     }
 
-    public static Position of(char file, int rank) {
-        return new Position(file, rank);
+    public static Position of(int fileIndex, int rank) {
+        if (fileIndex < 0 || fileIndex > 7 || rank < 1 || rank > 8) {
+            throw new IllegalArgumentException("Position out of bounds: " + fileIndex + "," + rank);
+        }
+        return CACHE[(rank - 1) * 8 + fileIndex];
     }
 
-    public Position(String position) {
-        if (position == null) {
-            throw new IllegalArgumentException("Position cannot be null");
-        }
-        if (position.length() != 2) {
-            throw new IllegalArgumentException("Invalid position format");
-        }
-        char file = position.toLowerCase().charAt(0);
-        int rank = Character.getNumericValue(position.charAt(1));
-        if (file < 'a' || file > 'h' || rank < 1 || rank > 8) {
-            throw new IllegalArgumentException("Position out of bounds");
-        }
-        this(file, rank);
+    public static Position of(char file, int rank) {
+        return of(Character.toLowerCase(file) - 'a', rank);
     }
 
     public static Position fromString(String sourcePosString) {
-        return new Position(sourcePosString);
+        if (sourcePosString == null || sourcePosString.length() != 2) {
+            throw new IllegalArgumentException("Invalid position format");
+        }
+        char file = sourcePosString.toLowerCase().charAt(0);
+        int rank = Character.getNumericValue(sourcePosString.charAt(1));
+        return of(file, rank);
     }
 
     public int getRow() {

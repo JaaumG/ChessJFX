@@ -34,7 +34,7 @@ public abstract class Movement {
 
         while (currentRow != to.getRow() || currentCol != to.getColumn()) {
             if (diagonal && Math.abs(currentRow - from.getRow()) != Math.abs(currentCol - from.getColumn())) break;
-            Position pos = new Position(currentCol, currentRow);
+            Position pos = Position.of(currentCol, currentRow);
             Optional<Piece> blocker = board.findPieceAt(pos);
             if (blocker.isPresent()) return false;
             currentRow += rowDir;
