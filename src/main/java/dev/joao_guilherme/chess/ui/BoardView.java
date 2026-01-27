@@ -39,7 +39,7 @@ public class BoardView extends GridPane {
             Class<? extends Piece> aClass = dialog.showAndWait().orElse(null);
 
             if (aClass != null) {
-                board.promote(event.position(), aClass);
+                board.promote(event.from(), event.position(), aClass);
             }
         });
 
@@ -61,7 +61,7 @@ public class BoardView extends GridPane {
         });
 
         eventPublisher.subscribe(PromoteEvent.class, event -> {
-            removePieceAt(event.promotedPosition());
+            removePieceAt(event.pawn().getPosition());
             addPiece(event.promotedPiece());
         });
     }
