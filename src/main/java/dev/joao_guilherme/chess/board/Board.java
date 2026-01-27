@@ -151,23 +151,16 @@ public class Board implements Cloneable {
 
     public boolean isPieceMovementAvoidingCheck(Piece piece, Position to) {
         if (piece == null || !pieces.get(piece.getColor()).contains(piece) || !piece.isValidMove(this, to)) return false;
-        Piece captured = pieceByPosition.get(to);
+        Optional<Piece> captured = findPieceAt(to);
         Position from = piece.getPosition();
 
-        pieceByPosition.remove(from);
-        pieceByPosition.put(to, piece);
-        piece.setPosition(to);
-        if (captured != null) pieces.get(captured.getColor()).remove(captured);
+        captured.ifPresent(this::capture);
+        updatePiecePosition(piece, from, to);
 
         boolean safe = !findKing(piece.getColor()).isInCheck(this);
 
-        piece.setPosition(from);
-        pieceByPosition.put(from, piece);
-        pieceByPosition.remove(to);
-        if (captured != null) {
-            pieceByPosition.put(to, captured);
-            pieces.get(captured.getColor()).add(captured);
-        }
+        updatePiecePosition(piece, to, from);
+        captured.ifPresent(this::unCapture);
 
         return safe;
     }
@@ -185,8 +178,8 @@ public class Board implements Cloneable {
         if (capturedPiece == null || capturedPiece.getColor() == piece.getColor()) return false;
         if (capturedPiece instanceof King) return false;
         if (piece.moveTo(this, capturedPiece.getPosition()) && pieces.get(capturedPiece.getColor()).remove(capturedPiece)) {
-            pieceByPosition.remove(capturedPiece.getPosition());
-            pieceByPosition.put(piece.getPosition(), piece);
+            capture(capturedPiece);
+            updatePiecePosition(piece, from, capturedPiece.getPosition());
             eventPublisher.publish(new CaptureEvent(from, piece.getPosition(), piece, capturedPiece));
             nextTurn();
             return true;
@@ -196,16 +189,15 @@ public class Board implements Cloneable {
 
     public boolean capturePieceEnPassant(Pawn pawn, Piece capturedPiece, Position to) {
         if (pawn.moveTo(this, to) && pieces.get(capturedPiece.getColor()).remove(capturedPiece)) {
-            pieceByPosition.remove(capturedPiece.getPosition());
-            pieceByPosition.put(pawn.getPosition(), pawn);
+            capture(capturedPiece);
+            updatePiecePosition(pawn, pawn.getPosition(), to);
             return true;
         }
         return false;
     }
 
     public Set<Piece> getPieces() {
-        return pieces.values().stream()
-                .flatMap(Set::stream).collect(Collectors.toSet());
+        return pieces.values().stream().flatMap(Set::stream).collect(Collectors.toSet());
     }
 
     public Set<Piece> getPieces(Color color) {
@@ -214,6 +206,22 @@ public class Board implements Cloneable {
 
     public List<Position> getPositions() {
         return Arrays.stream(positions).flatMap(Arrays::stream).toList();
+    }
+
+    private void capture(Piece captured) {
+        pieces.get(captured.getColor()).remove(captured);
+        pieceByPosition.remove(captured.getPosition());
+    }
+
+    private void unCapture(Piece captured) {
+        pieces.get(captured.getColor()).add(captured);
+        pieceByPosition.put(captured.getPosition(), captured);
+    }
+
+    private void updatePiecePosition(Piece piece, Position from, Position to) {
+        pieceByPosition.remove(from);
+        piece.setPosition(to);
+        pieceByPosition.put(to, piece);
     }
 
     public boolean movePiece(Position from, Position to) {
@@ -228,8 +236,7 @@ public class Board implements Cloneable {
         }
         if (isCapturingMove(this, piece, to)) return capturePiece(piece, getPieceAt(to));
         if (piece.moveTo(this, to)) {
-            pieceByPosition.remove(from);
-            pieceByPosition.put(to, piece);
+            updatePiecePosition(piece, from, to);
             eventPublisher.publish(new MoveEvent(from, to, piece));
             nextTurn();
             return true;
@@ -243,10 +250,8 @@ public class Board implements Cloneable {
                     Position kingStart = king.getPosition();
                     Position rookStart = rook.getPosition();
                     if (king.castle(this, to, rook)) {
-                        pieceByPosition.remove(kingStart);
-                        pieceByPosition.remove(rookStart);
-                        pieceByPosition.put(king.getPosition(), king);
-                        pieceByPosition.put(rook.getPosition(), rook);
+                        updatePiecePosition(king, kingStart, king.getPosition());
+                        updatePiecePosition(rook, rookStart, rook.getPosition());
                         eventPublisher.publish(new CastleEvent(king, rook, kingStart, rookStart));
                         nextTurn();
                         return true;
