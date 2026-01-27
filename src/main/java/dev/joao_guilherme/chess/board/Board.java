@@ -117,8 +117,10 @@ public class Board implements Cloneable {
         try {
             Piece promotedPiece = tClass.getConstructor(Color.class, Position.class).newInstance(turn, promotionPosition);
             pieces.get(promotedPiece.getColor()).add(promotedPiece);
+            pieceByPosition.put(promotionPosition, promotedPiece);
             Pawn pawn = (Pawn) getPieceAt(from);
             pieces.get(pawn.getColor()).remove(pawn);
+            pieceByPosition.remove(from);
             eventPublisher.publish(new PromoteEvent(pawn, promotedPiece, promotionPosition));
             nextTurn();
             return true;
@@ -134,6 +136,7 @@ public class Board implements Cloneable {
         if (piece.moveTo(this, to)) {
             if (findPieceAt(to).isPresent() && findPieceAt(to).get() != piece) {
                 pieces.get(turn.opposite()).remove(findPieceAt(to).get());
+                pieceByPosition.remove(to);
             }
             try {
                 Piece promotedPiece = promotionPieceClass
@@ -141,7 +144,9 @@ public class Board implements Cloneable {
                         .newInstance(piece.getColor(), to);
 
                 pieces.get(piece.getColor()).remove(piece);
+                pieceByPosition.remove(from);
                 pieces.get(piece.getColor()).add(promotedPiece);
+                pieceByPosition.put(to, promotedPiece);
                 nextTurn();
             } catch (Exception e) {
                 e.printStackTrace();
