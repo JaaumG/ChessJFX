@@ -14,46 +14,61 @@ import static dev.joao_guilherme.chess.enums.Color.WHITE;
 
 public class BoardEvaluator {
 
+    private static final float MOBILITY_WEIGHT = 0.05f;
+    private static final float CENTER_WEIGHT = 0.3f;
+    private static final float KING_SAFETY_WEIGHT = 1.5f;
+    private static final float CHECK_PENALTY_WEIGHT = 2f;
+    private static final float PAWN_STRUCTURE_WEIGHT = 0.5f;
+
     public static float evaluate(Board board) {
 
-        // 1. Material
-        float whiteMaterial = board.getPieces(WHITE).stream().mapToInt(Piece::getValue).sum();
-        float blackMaterial = board.getPieces(BLACK).stream().mapToInt(Piece::getValue).sum();
+        float whiteMaterial = 0;
+        float blackMaterial = 0;
+        float whiteMobility = 0;
+        float blackMobility = 0;
+        float whiteCenter = 0;
+        float blackCenter = 0;
 
-        // 2. Mobilidade (peso reduzido)
-        float whiteMobility = 0.1f * board.getPieces(WHITE).stream()
-                .mapToInt(p -> p.getPossibleMoves(board).size())
-                .sum();
-
-        float blackMobility = 0.1f * board.getPieces(BLACK).stream()
-                .mapToInt(p -> p.getPossibleMoves(board).size())
-                .sum();
-
-        // 3. Controle do centro (E4, D4, E5, D5)
         Set<Position> center = Set.of(
                 Position.D4, Position.E4,
                 Position.D5, Position.E5
         );
 
-        float whiteCenter = 0.3f * board.getPieces(WHITE).stream()
-                .filter(p -> center.contains(p.getPosition()))
-                .count();
+        for (Color c : List.of(WHITE, BLACK)) {
+            int material = 0;
+            int mobility = 0;
+            long centerCount = 0;
 
-        float blackCenter = 0.3f * board.getPieces(BLACK).stream()
-                .filter(p -> center.contains(p.getPosition()))
-                .count();
+            for (Piece piece : board.getPieces(c)) {
+                material += piece.getValue();
+                mobility += piece.getPossibleMoves(board).size();
+                if (center.contains(piece.getPosition())) {
+                    centerCount++;
+                }
+            }
+
+            if (c == WHITE) {
+                whiteMaterial = material;
+                whiteMobility = MOBILITY_WEIGHT * mobility;
+                whiteCenter = CENTER_WEIGHT * centerCount;
+            } else {
+                blackMaterial = material;
+                blackMobility = MOBILITY_WEIGHT * mobility;
+                blackCenter = CENTER_WEIGHT * centerCount;
+            }
+        }
 
         // 4. Segurança do Rei
-        float whiteKingSafety = isKingSafe(board, WHITE) ? 1.5f : -1.5f;
-        float blackKingSafety = isKingSafe(board, BLACK) ? 1.5f : -1.5f;
+        float whiteKingSafety = isKingSafe(board, WHITE) ? KING_SAFETY_WEIGHT : -KING_SAFETY_WEIGHT;
+        float blackKingSafety = isKingSafe(board, BLACK) ? KING_SAFETY_WEIGHT : -KING_SAFETY_WEIGHT;
 
         // 5. Estrutura de Peões (simples)
         float whitePawnStructure = evaluatePawnStructure(board, WHITE);
         float blackPawnStructure = evaluatePawnStructure(board, BLACK);
 
         // 6. Penalidade para check
-        float whiteCheckPenalty = board.isCheck(WHITE) ? -2 : 0;
-        float blackCheckPenalty = board.isCheck(BLACK) ? -2 : 0;
+        float whiteCheckPenalty = board.isCheck(WHITE) ? -CHECK_PENALTY_WEIGHT : 0;
+        float blackCheckPenalty = board.isCheck(BLACK) ? -CHECK_PENALTY_WEIGHT : 0;
 
         // 7. Checkmate → infinito
         if (board.isCheckMate(WHITE)) return Float.NEGATIVE_INFINITY;
