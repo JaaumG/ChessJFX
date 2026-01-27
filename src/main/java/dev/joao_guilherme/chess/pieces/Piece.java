@@ -6,6 +6,7 @@ import dev.joao_guilherme.chess.enums.Color;
 
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 
 public abstract sealed class Piece implements Cloneable permits Bishop, King, Knight, Queen, Pawn, Rook {
 
@@ -76,6 +77,26 @@ public abstract sealed class Piece implements Cloneable permits Bishop, King, Kn
 
     public boolean hasMoved() {
         return moveCount > 0;
+    }
+
+    protected void processRays(Board board, List<Position> moves, List<Position>[] rays) {
+        for (List<Position> ray : rays) {
+            for (Position target : ray) {
+                Optional<Piece> pieceAtTarget = board.findPieceAt(target);
+
+                if (pieceAtTarget.isEmpty()) {
+                    if (board.isPieceMovementAvoidingCheck(this, target)) {
+                        moves.add(target);
+                    }
+                } else {
+                    if (pieceAtTarget.get().isNotSameColor(this.color) && board.isPieceMovementAvoidingCheck(this, target)) {
+                          moves.add(target);
+                        }
+
+                    break;
+                }
+            }
+        }
     }
 
     @Override
