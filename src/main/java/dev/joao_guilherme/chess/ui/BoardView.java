@@ -51,8 +51,14 @@ public class BoardView extends GridPane {
             System.out.println("Turn changed to: " + event.color());
             if (event.color().equals(BLACK)) {
                 Thread.ofVirtual().start(() -> {
+                    System.out.println("Computer thinking...");
+                    long startTime = System.currentTimeMillis();
                     Move move = ChessEngine.computeMove(board);
-                    Platform.runLater(() -> board.movePiece(move.piece().getPosition(), move.to()));
+                    System.out.println("Computer move: " + move + " in " + (System.currentTimeMillis() - startTime) + "ms");
+                    Platform.runLater(() -> {
+                        if (move.promotion() != null) board.movePieceAndPromote(move.piece().getPosition(), move.to(), move.promotion());
+                        else board.movePiece(move.piece().getPosition(), move.to());
+                    });
                 });
 
             }
