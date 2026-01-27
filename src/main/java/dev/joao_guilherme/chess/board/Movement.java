@@ -81,8 +81,10 @@ public abstract class Movement {
 
     public static boolean isCastling(King king, Board board, Position from, Position to) {
         if (isMovementInvalid(from, to)) return false;
+        if (!noPieceAtTarget(board, to)) return false;
         if (!isSideways(from, to)) return false;
         if (distance(from, to) != 2) return false;
+        if (king.isInCheck(board)) return false;
         boolean kingSide = to.file() == 'g';
         return board.findPieceAt(Position.of((kingSide ? 'H' : 'A'), from.rank()))
                 .filter(Rook.class::isInstance)
@@ -114,7 +116,7 @@ public abstract class Movement {
     }
 
     public static boolean isCapturingMove(Board board, Piece piece, Position to) {
-        return hasOpponentPieceAtTarget(board, piece.getColor(), to) && noSameColorPieceAtTarget(board, piece.getColor(), to);
+        return hasOpponentPieceAtTarget(board, piece.getColor(), to) && noSameColorPieceAtTarget(board, piece.getColor(), to) && !board.findPieceAt(to).map(King.class::isInstance).orElse(false);
     }
 
     public static boolean isPawnTwoRowFirstMove(Position from, Position to) {
