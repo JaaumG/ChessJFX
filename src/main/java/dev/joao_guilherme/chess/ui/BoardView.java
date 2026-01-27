@@ -2,14 +2,19 @@ package dev.joao_guilherme.chess.ui;
 
 import dev.joao_guilherme.chess.board.Board;
 import dev.joao_guilherme.chess.board.Position;
+import dev.joao_guilherme.chess.engine.ChessEngine;
+import dev.joao_guilherme.chess.engine.Move;
 import dev.joao_guilherme.chess.enums.Color;
 import dev.joao_guilherme.chess.events.*;
 import dev.joao_guilherme.chess.pieces.*;
+import javafx.application.Platform;
 import javafx.scene.layout.GridPane;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import static dev.joao_guilherme.chess.enums.Color.BLACK;
 
 public class BoardView extends GridPane {
 
@@ -40,6 +45,16 @@ public class BoardView extends GridPane {
 
             if (aClass != null) {
                 board.promote(event.from(), event.position(), aClass);
+            }
+        });
+        eventPublisher.subscribe(TurnEvent.class, event -> {
+            System.out.println("Turn changed to: " + event.color());
+            if (event.color().equals(BLACK)) {
+                Thread.ofVirtual().start(() -> {
+                    Move move = ChessEngine.computeMove(board);
+                    Platform.runLater(() -> board.movePiece(move.piece().getPosition(), move.to()));
+                });
+
             }
         });
 
