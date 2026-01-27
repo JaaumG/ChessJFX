@@ -101,19 +101,19 @@ public class Board implements Cloneable {
         return !isCheck(color) && pieces.get(color).stream().allMatch(piece -> piece.getPossibleMoves(this).isEmpty());
     }
 
-    private boolean promotion(Pawn pawn, Position to) {
+    private boolean promotion(Pawn pawn, Position from, Position to) {
         if (pawn.reachedLastRank(to)) {
-            eventPublisher.publish(new PromotionRequestEvent(pawn, to));
+            eventPublisher.publish(new PromotionRequestEvent(from, pawn, to));
             return  true;
         }
         return false;
     }
 
-    public boolean promote(Position promotionPosition, Class<? extends Piece> tClass) {
+    public boolean promote(Position from, Position promotionPosition, Class<? extends Piece> tClass) {
         try {
             Piece promotedPiece = tClass.getConstructor(Color.class, Position.class).newInstance(turn, promotionPosition);
             pieces.get(promotedPiece.getColor()).add(promotedPiece);
-            Pawn pawn = (Pawn) getPieceAt(promotionPosition);
+            Pawn pawn = (Pawn) getPieceAt(from);
             pieces.get(pawn.getColor()).remove(pawn);
             eventPublisher.publish(new PromoteEvent(pawn, promotedPiece, promotionPosition));
             nextTurn();
