@@ -58,7 +58,7 @@ public abstract sealed class Piece implements Cloneable permits Bishop, King, Kn
         return position;
     }
 
-    protected void setPosition(Position position) {
+    public void setPosition(Position position) {
         this.position = position;
     }
 
