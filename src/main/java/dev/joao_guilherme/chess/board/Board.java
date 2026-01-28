@@ -2,12 +2,14 @@ package dev.joao_guilherme.chess.board;
 
 import dev.joao_guilherme.chess.enums.Color;
 import dev.joao_guilherme.chess.events.*;
+import dev.joao_guilherme.chess.movements.MoveExecutor;
+import dev.joao_guilherme.chess.movements.MoveRecord;
+import dev.joao_guilherme.chess.movements.handlers.*;
 import dev.joao_guilherme.chess.pieces.*;
 
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static dev.joao_guilherme.chess.movements.Movement.*;
 import static dev.joao_guilherme.chess.board.Position.*;
 import static dev.joao_guilherme.chess.enums.Color.BLACK;
 import static dev.joao_guilherme.chess.enums.Color.WHITE;
@@ -27,16 +29,27 @@ public class Board implements Cloneable {
             {A1, B1, C1, D1, E1, F1, G1, H1}
     };
     private final HistoryManager history;
+    private final MoveExecutor moveExecutor;
+    private final EventPublisher eventPublisher;
     private Position enPassantAvailablePosition;
     private Map<Color, Set<Piece>> pieces;
     private Map<Position, Piece> pieceByPosition;
     private Color turn;
-    private EventPublisher eventPublisher;
 
     public Board(EventPublisher eventPublisher) {
         this.eventPublisher = eventPublisher;
         setupInitialPositions();
-        turn = WHITE;
+        this.turn = WHITE;
+        this.moveExecutor = new MoveExecutor(
+                this,
+                List.of(
+                        new PromotionHandler(),
+                        new CastlingHandler(),
+                        new EnPassantHandler(),
+                        new CaptureMoveHandler(),
+                        new NormalMoveHandler()
+                )
+        );
         this.history = new HistoryManager();
     }
 
@@ -52,6 +65,17 @@ public class Board implements Cloneable {
             pieces.computeIfAbsent(clone.getColor(), k -> new HashSet<>()).add(clone);
             pieceByPosition.put(clone.getPosition(), clone);
         }
+
+        this.moveExecutor = new MoveExecutor(
+                this,
+                List.of(
+                        new PromotionHandler(),
+                        new CastlingHandler(),
+                        new EnPassantHandler(),
+                        new CaptureMoveHandler(),
+                        new NormalMoveHandler()
+                )
+        );
         this.history = new HistoryManager();
     }
 
