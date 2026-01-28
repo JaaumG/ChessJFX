@@ -35,9 +35,9 @@ public class ChessEngine {
 
         Move best = new Move(null, null, isMaximizing ? Float.NEGATIVE_INFINITY : Float.POSITIVE_INFINITY, null);
         for (Move moveObj : generateAllMoves(board)) {
-            board.performMoveInternal(moveObj);
+            board.movePiece(moveObj.piece().getPosition(), moveObj.to());
             Move eval = minimax(board, depth - 1, alpha, beta);
-            board.undoMoveInternal();
+            board.undo();
             Move candidateMove = new Move(moveObj.piece(), moveObj.to(), eval.eval(), moveObj.promotion());
             if (isMaximizing) {
                 if (eval.eval() > best.eval() || best.piece() == null) best = candidateMove;
