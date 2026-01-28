@@ -51,6 +51,7 @@ public class Board implements Cloneable {
                 )
         );
         this.history = new HistoryManager();
+        this.eventPublisher.publish(new TurnEvent(turn));
     }
 
     private Board(Board board) {
@@ -134,22 +135,25 @@ public class Board implements Cloneable {
         return !isCheck(color) && pieces.get(color).stream().allMatch(piece -> piece.getPossibleMoves(this).isEmpty());
     }
 
-    private boolean promotion(Pawn pawn, Position from, Position to) {
-        if (pawn.reachedLastRank(to)) {
-            eventPublisher.publish(new PromotionRequestEvent(from, pawn, to));
-            return  true;
-        }
-        return false;
-    }
-
     public boolean promote(Position from, Position promotionPosition, Class<? extends Piece> tClass) {
         try {
             Piece promotedPiece = tClass.getConstructor(Color.class, Position.class).newInstance(turn, promotionPosition);
             pieces.get(promotedPiece.getColor()).add(promotedPiece);
             pieceByPosition.put(promotionPosition, promotedPiece);
             Pawn pawn = (Pawn) getPieceAt(from);
-            pieces.get(pawn.getColor()).remove(pawn);
-            pieceByPosition.remove(from);
+            MoveRecord lastRecord = history.pop();
+            if (lastRecord != null) {
+                MoveRecord completedRecord = new MoveRecord(
+                        lastRecord.from(), lastRecord.to(), lastRecord.movedPiece(),
+                        lastRecord.capturedPiece(), lastRecord.promotedFrom(),
+                        promotedPiece,
+                        lastRecord.enPassantSquareBefore(), lastRecord.enPassantSquareAfter(),
+                        lastRecord.castling(), lastRecord.rookFrom(), lastRecord.rookTo(),
+                        lastRecord.oldMoveCount()
+                );
+                history.push(completedRecord);
+            }
+
             eventPublisher.publish(new PromoteEvent(pawn, promotedPiece, promotionPosition));
             nextTurn();
             return true;
@@ -162,11 +166,12 @@ public class Board implements Cloneable {
         Piece piece = findPieceAt(from).orElse(null);
         if (piece == null || piece.getColor() != turn) return;
 
+        Optional<Piece> capturedOpt = findPieceAt(to);
+        if (capturedOpt.isPresent() && capturedOpt.get() != piece) {
+            Piece captured = capturedOpt.get();
+            capturePiece(captured);
+        }
         if (piece.moveTo(this, to)) {
-            if (findPieceAt(to).isPresent() && findPieceAt(to).get() != piece) {
-                pieces.get(turn.opposite()).remove(findPieceAt(to).get());
-                pieceByPosition.remove(to);
-            }
             try {
                 Piece promotedPiece = promotionPieceClass
                         .getConstructor(Color.class, Position.class)
@@ -207,27 +212,11 @@ public class Board implements Cloneable {
         return pieceByPosition.containsKey(position) ? Optional.of(pieceByPosition.get(position)) : Optional.empty();
     }
 
-    public boolean capturePiece(Piece piece, Piece capturedPiece) {
-        Position from = piece.getPosition();
-        if (capturedPiece == null || capturedPiece.getColor() == piece.getColor()) return false;
-        if (capturedPiece instanceof King) return false;
-        if (piece.moveTo(this, capturedPiece.getPosition()) && pieces.get(capturedPiece.getColor()).remove(capturedPiece)) {
-            capture(capturedPiece);
-            updatePiecePosition(piece, from, capturedPiece.getPosition());
-            eventPublisher.publish(new CaptureEvent(from, piece.getPosition(), piece, capturedPiece));
-            nextTurn();
-            return true;
-        }
-        return false;
-    }
-
-    public boolean capturePieceEnPassant(Pawn pawn, Piece capturedPiece, Position to) {
-        if (pawn.moveTo(this, to) && pieces.get(capturedPiece.getColor()).remove(capturedPiece)) {
-            capture(capturedPiece);
-            updatePiecePosition(pawn, pawn.getPosition(), to);
-            return true;
-        }
-        return false;
+    public void capturePiece(Piece capturedPiece) {
+        if (capturedPiece == null) return;
+        if (capturedPiece.getColor() == turn) return;
+        if (capturedPiece instanceof King) return;
+        capture(capturedPiece);
     }
 
     public Set<Piece> getPieces() {
@@ -259,50 +248,85 @@ public class Board implements Cloneable {
     }
 
     public boolean movePiece(Position from, Position to) {
-        Piece piece = getPieceAt(from);
-        if (piece.getColor() != turn || !isPieceMovementAvoidingCheck(piece, to)) return false;
-        if (piece instanceof King king && isCastling(king, this, from, to)) return performCastlingMove(king, to);
-        if (piece instanceof Pawn pawn) {
-            if (isPawnTwoRowFirstMove(from, to)) enPassantAvailablePosition = Position.of(from.file(), (from.rank() + to.rank()) / 2);
-            else if (isEnPassant(this, from, to, pawn.getColor())) return performEnPassantMove(pawn, from, to);
-            else enPassantAvailablePosition = null;
-            if (pawn.reachedLastRank(to)) return promotion(pawn, from, to);
-        }
-        if (isCapturingMove(this, piece, to)) return capturePiece(piece, getPieceAt(to));
-        if (piece.moveTo(this, to)) {
-            updatePiecePosition(piece, from, to);
-            eventPublisher.publish(new MoveEvent(from, to, piece));
-            nextTurn();
-            return true;
-        }
-        return false;
+        Piece piece = findPieceAt(from).orElse(null);
+        if (piece == null) return false;
+        if (piece.getColor() != turn) return false;
+        if (!piece.isValidMove(this, to)) return false;
+        if (!isPieceMovementAvoidingCheck(piece, to)) return false;
+        return moveExecutor.executeMove(from, to);
     }
 
-    private boolean performCastlingMove(King king, Position to) {
-        return getRookForCastling(king, to)
-                .map(rook -> {
-                    Position kingStart = king.getPosition();
-                    Position rookStart = rook.getPosition();
-                    if (king.castle(this, to, rook)) {
-                        updatePiecePosition(king, kingStart, king.getPosition());
-                        updatePiecePosition(rook, rookStart, rook.getPosition());
-                        eventPublisher.publish(new CastleEvent(king, rook, kingStart, rookStart));
-                        nextTurn();
-                        return true;
-                    }
-                    return false;
-                }).orElse(false);
+    public void redo() {
+        MoveRecord rec = history.popRedo();
+        if (rec == null) return;
+
+        Piece piece = rec.movedPiece();
+
+        this.turn = this.turn.opposite();
+
+        this.enPassantAvailablePosition = rec.enPassantSquareBefore();
+
+        if (rec.capturedPiece() != null) {
+            removePiece(rec.capturedPiece());
+        }
+
+        updatePiecePosition(piece, rec.from(), rec.to());
+        piece.incrementMoveCount();
+
+        if (rec.promotedTo() != null) {
+            Piece promoted = rec.promotedTo();
+            removePiece(piece);
+            addPiece(promoted);
+            updatePiecePosition(promoted, rec.from(), rec.to());
+        }
+
+        this.enPassantAvailablePosition = rec.enPassantSquareAfter();
+
+        if (rec.castling()) {
+            Piece rook = getPieceAt(rec.rookFrom());
+            updatePiecePosition(rook, rec.rookFrom(), rec.rookTo());
+            rook.incrementMoveCount();
+        }
+
+        history.push(rec);
     }
 
-    private boolean performEnPassantMove(Pawn pawn, Position from, Position to) {
-        return getPawnForEnPassant(pawn, to)
-                .filter(piece -> capturePieceEnPassant(pawn, piece, to))
-                .map(piece -> {
-                    eventPublisher.publish(new CaptureEvent(from, to, pawn, piece));
-                    enPassantAvailablePosition = null;
-                    nextTurn();
-                    return true;
-                }).orElse(false);
+    public void undo() {
+        MoveRecord rec = history.pop();
+        if (rec == null) return;
+
+        this.turn = this.turn.opposite();
+
+        this.enPassantAvailablePosition = rec.enPassantSquareBefore();
+
+        Piece piece = rec.movedPiece();
+
+        if (rec.promotedTo() != null) {
+            Piece promoted = rec.promotedTo();
+            removePiece(promoted);
+
+            Piece original = rec.promotedFrom();
+            addPiece(original);
+            updatePiecePosition(original, rec.to(), rec.from());
+            original.setMoveCount(rec.oldMoveCount());
+        } else {
+            updatePiecePosition(piece, rec.to(), rec.from());
+            piece.setMoveCount(rec.oldMoveCount());
+        }
+
+        if (rec.capturedPiece() != null) {
+            Piece captured = rec.capturedPiece();
+            addPiece(captured);
+            pieceByPosition.put(captured.getPosition(), captured);
+        }
+
+        if (rec.castling()) {
+            Piece rook = getPieceAt(rec.rookTo());
+            updatePiecePosition(rook, rec.rookTo(), rec.rookFrom());
+            rook.setMoveCount(rook.getMoveCount() - 1);
+        }
+
+        history.pushRedo(rec);
     }
 
     public void addPiece(Piece piece) {
