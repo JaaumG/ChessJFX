@@ -252,7 +252,7 @@ public class Board implements Cloneable {
         pieceByPosition.put(captured.getPosition(), captured);
     }
 
-    private void updatePiecePosition(Piece piece, Position from, Position to) {
+    public void updatePiecePosition(Piece piece, Position from, Position to) {
         pieceByPosition.remove(from);
         piece.setPosition(to);
         pieceByPosition.put(to, piece);
@@ -305,27 +305,21 @@ public class Board implements Cloneable {
                 }).orElse(false);
     }
 
-    private Optional<Pawn> getPawnForEnPassant(Pawn pawn, Position to) {
-        return findPieceAt(Position.of(to.file(), pawn.getPosition().rank()))
-                .filter(Pawn.class::isInstance)
-                .map(Pawn.class::cast)
-                .filter(_ -> enPassantAvailablePosition != null && enPassantAvailablePosition.equals(to));
+    public void addPiece(Piece piece) {
+        pieces.get(piece.getColor()).add(piece);
+        pieceByPosition.put(piece.getPosition(), piece);
     }
 
-    private Optional<Rook> getRookForCastling(King king, Position to) {
-        boolean kingSide = to.file() == 'g';
-        return findPieceAt(Position.of((kingSide ? 'H' : 'A'), king.getPosition().rank()))
-                .filter(Rook.class::isInstance)
-                .map(Rook.class::cast)
-                .filter(rook -> rook.getColor() == king.getColor())
-                .filter(rook -> noPieceInBetween(this, king.getPosition(), rook.getPosition()));
+    public void removePiece(Piece piece) {
+        pieces.get(piece.getColor()).remove(piece);
+        pieceByPosition.remove(piece.getPosition());
     }
 
     public Color getTurn() {
         return turn;
     }
 
-    private void nextTurn() {
+    public void nextTurn() {
         turn = turn.opposite();
         eventPublisher.publish(new TurnEvent(turn));
     }
@@ -345,5 +339,29 @@ public class Board implements Cloneable {
     @Override
     public Board clone() {
         return new Board(this);
+    }
+
+    public EventPublisher getEventPublisher() {
+        return eventPublisher;
+    }
+
+    public void clearEnPassant() {
+        this.enPassantAvailablePosition = null;
+    }
+
+    public void setEnPassantPossible(Position from, Position to) {
+        this.enPassantAvailablePosition = Position.of(from.file(), (from.rank() + to.rank()) / 2);
+    }
+
+    public void recordMove(MoveRecord build) {
+        history.push(build);
+    }
+
+    public Position getEnPassantAvailablePosition() {
+        return enPassantAvailablePosition;
+    }
+
+    public HistoryManager getHistoryManager() {
+        return history;
     }
 }
