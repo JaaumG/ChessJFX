@@ -6,6 +6,7 @@ import dev.joao_guilherme.chess.engine.ChessEngine;
 import dev.joao_guilherme.chess.engine.Move;
 import dev.joao_guilherme.chess.enums.Color;
 import dev.joao_guilherme.chess.events.*;
+import dev.joao_guilherme.chess.movements.MoveRecord;
 import dev.joao_guilherme.chess.pieces.*;
 import javafx.application.Platform;
 import javafx.scene.layout.GridPane;
@@ -19,7 +20,7 @@ import static dev.joao_guilherme.chess.enums.Color.BLACK;
 public class BoardView extends GridPane {
 
     private static BoardView instance;
-
+    private boolean viewOrientationInverted = false;
     private final Map<Position, PositionView> squares = new HashMap<>();
     private final Board board;
 
@@ -64,9 +65,17 @@ public class BoardView extends GridPane {
             }
         });
 
+        eventPublisher.subscribe(TurnEvent.class, event -> {
+            MoveRecord lastMove = board.getHistoryManager().peek();
+            if (lastMove != null) {
+                String san = ChessNotation.toSAN(board, lastMove);
+                System.out.println("Movimento: " + san);
+            }
+        });
+
         eventPublisher.subscribe(CaptureEvent.class, event -> {
-            removePieceAt(event.position());
-            movePiece(event.piece().getPosition(), event.piece());
+            removePieceAt(event.capturedPiece().getPosition());
+            movePiece(event.position(), event.piece());
             SoundPlayer.playCapture();
         });
 
@@ -105,11 +114,10 @@ public class BoardView extends GridPane {
             PositionView stackPane = squares.get(piece.getPosition());
             stackPane.getChildren().add(new PieceView(piece));
         });
-        rotateBoard();
     }
 
     private void rotateBoard() {
-        int rotation = getTurn().equals(Color.WHITE) ? 0 : 180;
+        int rotation = viewOrientationInverted ? 180 : 0;
         setRotate(rotation);
         squares.forEach((_, positionView) -> positionView.setRotate(rotation));
     }
@@ -135,6 +143,24 @@ public class BoardView extends GridPane {
                     });
             System.out.println("Checkmate! " + getTurn().opposite() + " wins.");
         }
+    }
+    public void toggleRotation() {
+        this.viewOrientationInverted = !this.viewOrientationInverted;
+        rotateBoard();
+    }
+
+    public void undo() {
+        board.undo();
+        refreshBoard();
+    }
+
+    public void redo() {
+        board.redo();
+        refreshBoard();
+    }
+
+    public Board getBoard() {
+        return board;
     }
 
     private void movePiece(Position from, Piece piece) {
