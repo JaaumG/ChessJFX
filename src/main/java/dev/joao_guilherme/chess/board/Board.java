@@ -26,6 +26,7 @@ public class Board implements Cloneable {
             {A2, B2, C2, D2, E2, F2, G2, H2},
             {A1, B1, C1, D1, E1, F1, G1, H1}
     };
+    private final HistoryManager history;
     private Position enPassantAvailablePosition;
     private Map<Color, Set<Piece>> pieces;
     private Map<Position, Piece> pieceByPosition;
@@ -36,6 +37,7 @@ public class Board implements Cloneable {
         this.eventPublisher = eventPublisher;
         setupInitialPositions();
         turn = WHITE;
+        this.history = new HistoryManager();
     }
 
     private Board(Board board) {
@@ -43,11 +45,14 @@ public class Board implements Cloneable {
         this.pieceByPosition = new HashMap<>();
         this.turn = board.turn;
         this.eventPublisher = new EventPublisher();
+        this.enPassantAvailablePosition = board.enPassantAvailablePosition;
+
         for (Piece piece : board.getPieces()) {
             Piece clone = piece.clone();
             pieces.computeIfAbsent(clone.getColor(), k -> new HashSet<>()).add(clone);
             pieceByPosition.put(clone.getPosition(), clone);
         }
+        this.history = new HistoryManager();
     }
 
     private void setupInitialPositions() {
