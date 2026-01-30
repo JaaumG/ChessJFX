@@ -21,6 +21,7 @@ public class MoveRecordBuilder {
     private Position rookTo;
 
     private int oldMoveCount;
+    private int oldHalfMoveClock;
 
     public MoveRecordBuilder(Position from, Position to, Piece movedPiece) {
         this.from = from;
@@ -66,6 +67,11 @@ public class MoveRecordBuilder {
         return this;
     }
 
+    public MoveRecordBuilder oldHalfMoveClock(int clock) {
+        this.oldHalfMoveClock = clock;
+        return this;
+    }
+
     public MoveRecord build() {
         return new MoveRecord(
                 from,
@@ -79,7 +85,8 @@ public class MoveRecordBuilder {
                 castling,
                 rookFrom,
                 rookTo,
-                oldMoveCount
+                oldMoveCount,
+                oldHalfMoveClock
         );
     }
 }
