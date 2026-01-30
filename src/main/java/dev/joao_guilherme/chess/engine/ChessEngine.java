@@ -84,15 +84,25 @@ public class ChessEngine {
         TT.store(zobristKey, move.eval(), depth, flag, move);
     }
 
-    private static List<Move> generateAllMoves(Board board) {
+    private static List<Move> generateAllMoves(Board board, boolean onlyCaptures) {
         List<Piece> pieces = new ArrayList<>(board.getPieces(board.getTurn()));
         List<Move> allMoves = new ArrayList<>();
 
         for (Piece piece : pieces) {
             for (Position move : piece.getPossibleMoves(board)) {
-                if (piece instanceof Pawn pawn && pawn.reachedLastRank(move)) {
-                    for (Class<? extends Piece> promotionType : PROMOTION_PIECE) {
-                        allMoves.add(new Move(piece, move, 0, promotionType));
+                boolean isCapture = isCapturingMove(board, piece, move);
+
+                boolean isPromotion = (piece instanceof Pawn pawn && pawn.reachedLastRank(move));
+
+                if (onlyCaptures && !isCapture && !isPromotion) continue;
+
+                if (isPromotion) {
+                    if (onlyCaptures) {
+                        allMoves.add(new Move(piece, move, 0, Queen.class));
+                    } else {
+                        for (Class<? extends Piece> promotionType : PROMOTION_PIECES) {
+                            allMoves.add(new Move(piece, move, 0, promotionType));
+                        }
                     }
                 } else {
                     allMoves.add(new Move(piece, move, 0, null));
