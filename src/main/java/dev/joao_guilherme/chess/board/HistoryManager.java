@@ -34,5 +34,9 @@ public class HistoryManager {
     public boolean hasRedo() {
         return !redoStack.isEmpty();
     }
+
+    public Deque<MoveRecord> getHistory() {
+        return history;
+    }
 }
 
