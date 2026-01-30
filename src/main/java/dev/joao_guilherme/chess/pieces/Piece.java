@@ -13,12 +13,14 @@ public abstract sealed class Piece implements Cloneable permits Bishop, King, Kn
     final Color color;
     final String name;
     final String iconPath;
+    final int value;
     Position position;
     int moveCount = 0;
 
-    protected Piece(Color color, String name, Position position) {
+    protected Piece(Color color, String name, int value, Position position) {
         this.color = color;
         this.name = name;
+        this.value = this.color == Color.WHITE ? value : -value;
         this.position = position;
         this.iconPath = "/pieces/%s-%s.png".formatted(name, color.name().toLowerCase().charAt(0));
     }
@@ -40,7 +42,9 @@ public abstract sealed class Piece implements Cloneable permits Bishop, King, Kn
                 .toList();
     }
 
-    public abstract int getValue();
+    public int getValue() {
+        return value;
+    }
 
     public Color getColor() {
         return color;
