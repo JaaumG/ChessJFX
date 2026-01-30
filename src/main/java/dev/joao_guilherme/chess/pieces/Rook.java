@@ -13,7 +13,7 @@ import static dev.joao_guilherme.chess.movements.Movement.*;
 public final class Rook extends Piece {
 
     public Rook(Color color, Position position) {
-        super(color, "rook", position);
+        super(color, "rook", 5, position);
     }
 
     private Rook(Rook piece) {
@@ -33,11 +33,6 @@ public final class Rook extends Piece {
         processRays(board, validMoves, MoveLookups.getRookRays(this.position));
 
         return validMoves;
-    }
-
-    @Override
-    public int getValue() {
-        return 5;
     }
 
     @Override

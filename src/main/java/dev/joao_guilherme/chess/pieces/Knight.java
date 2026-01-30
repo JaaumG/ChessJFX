@@ -14,7 +14,7 @@ import static dev.joao_guilherme.chess.movements.Movement.noSameColorPieceAtTarg
 public final class Knight extends Piece {
 
     public Knight(Color color, Position position) {
-        super(color, "knight", position);
+        super(color, "knight", 3, position);
     }
 
     private Knight(Knight piece) {
@@ -39,11 +39,6 @@ public final class Knight extends Piece {
     @Override
     public boolean isValidMove(Board board, Position newPosition) {
         return isLShaped(this.position, newPosition) && noSameColorPieceAtTarget(board, color, newPosition);
-    }
-
-    @Override
-    public int getValue() {
-        return 3;
     }
 
     @Override

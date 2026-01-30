@@ -13,7 +13,7 @@ import static dev.joao_guilherme.chess.movements.Movement.*;
 public final class Bishop extends Piece {
 
     public Bishop(Color color, Position position) {
-        super(color, "bishop", position);
+        super(color, "bishop", 3, position);
     }
 
     private Bishop(Bishop piece) {
@@ -31,11 +31,6 @@ public final class Bishop extends Piece {
     @Override
     public boolean isValidMove(Board board, Position newPosition) {
         return isDiagonal(this.position, newPosition) && noPieceInBetween(board, position, newPosition) && noSameColorPieceAtTarget(board, color, newPosition) ;
-    }
-
-    @Override
-    public int getValue() {
-        return 3;
     }
 
     @Override

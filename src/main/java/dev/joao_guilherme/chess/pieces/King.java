@@ -14,7 +14,7 @@ import static dev.joao_guilherme.chess.movements.Movement.*;
 public final class King extends Piece {
 
     public King(Color color, Position position) {
-        super(color, "king", position);
+        super(color, "king", 0, position);
     }
 
     private King(King piece) {
@@ -55,13 +55,8 @@ public final class King extends Piece {
         return  (basicMovement || (isCastling(this, board, this.position, newPosition) && !hasMoved()));
     }
 
-    private boolean isValidMoveWithoutCastling(Board board, Position newPosition) {
+    public boolean isValidMoveWithoutCastling(Board board, Position newPosition) {
         return ((isStraight(this.position, newPosition) && distance(this.position, newPosition) == 1) || (isDiagonal(this.position, newPosition) && distance(this.position, newPosition) == 2)) && noSameColorPieceAtTarget(board, color, newPosition);
-    }
-
-    @Override
-    public int getValue() {
-        return 10;
     }
 
     public boolean isInCheck(Board board) {

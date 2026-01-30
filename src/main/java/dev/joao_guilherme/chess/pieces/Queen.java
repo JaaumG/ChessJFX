@@ -13,7 +13,7 @@ import static dev.joao_guilherme.chess.movements.Movement.*;
 public final class Queen extends Piece {
 
     public Queen(Color color, Position position) {
-        super(color, "queen", position);
+        super(color, "queen", 9, position);
     }
 
     private Queen(Queen piece) {
@@ -35,11 +35,6 @@ public final class Queen extends Piece {
         processRays(board, validMoves, MoveLookups.getBishopRays(this.position));
 
         return validMoves;
-    }
-
-    @Override
-    public int getValue() {
-        return 9;
     }
 
     @Override
