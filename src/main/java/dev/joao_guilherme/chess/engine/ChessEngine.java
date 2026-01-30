@@ -115,7 +115,7 @@ public class ChessEngine {
             Piece victim = board.getPieceAt(to);
             score += 10 * victim.getValue() - piece.getValue();
         }
-        if (piece instanceof Pawn && board.isEnPassantLocation(to)) score += 10 - 1;
+        if (piece instanceof Pawn && board.isEnPassantLocation(piece.getColor(), to)) score += 10 - 1;
         if (piece instanceof Pawn pawn && pawn.reachedLastRank(to)) score += 900;
         return score;
     }
