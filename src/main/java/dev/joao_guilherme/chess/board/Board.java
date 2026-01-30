@@ -51,7 +51,7 @@ public class Board implements Cloneable {
                 )
         );
         this.history = new HistoryManager();
-        this.eventPublisher.publish(new TurnEvent(turn));
+        this.eventPublisher.publish(new TurnEvent(turn, null));
     }
 
     private Board(Board board) {
@@ -345,7 +345,7 @@ public class Board implements Cloneable {
 
     public void nextTurn() {
         turn = turn.opposite();
-        eventPublisher.publish(new TurnEvent(turn));
+        eventPublisher.publish(new TurnEvent(turn, history.peek()));
     }
 
     public boolean isEnPassantLocation(Position from) {
