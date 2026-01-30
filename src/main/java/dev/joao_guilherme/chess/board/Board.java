@@ -51,6 +51,7 @@ public class Board implements Cloneable {
                 )
         );
         this.history = new HistoryManager();
+        updatePositionHistory();
         this.eventPublisher.publish(new TurnEvent(turn, null));
     }
 
@@ -348,8 +349,8 @@ public class Board implements Cloneable {
         eventPublisher.publish(new TurnEvent(turn, history.peek()));
     }
 
-    public boolean isEnPassantLocation(Position from) {
-        return enPassantAvailablePosition != null && enPassantAvailablePosition.equals(from);
+    public boolean isEnPassantLocation(Color color, Position from) {
+        return (enPassantAvailablePosition != null && enPassantAvailablePosition.equals(from)) && from.rank() == (color == WHITE ? 6 : 2);
     }
 
     public King findKing(Color color) {
