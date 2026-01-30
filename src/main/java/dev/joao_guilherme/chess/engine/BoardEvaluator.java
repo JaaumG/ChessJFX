@@ -1,7 +1,6 @@
 package dev.joao_guilherme.chess.engine;
 
 import dev.joao_guilherme.chess.board.Board;
-import dev.joao_guilherme.chess.enums.Color;
 import dev.joao_guilherme.chess.pieces.*;
 
 
@@ -12,9 +11,8 @@ public class BoardEvaluator {
     public static float evaluate(Board board) {
         float score = 0;
         for (Piece piece : board.getPieces()) {
-            int materialValue = piece.getValue() * 10 * (piece.getColor() == Color.WHITE ? 1 : -1);
             score += evaluatePiecePosition(board, piece);
-            score += materialValue;
+            score += piece.getValue() * 100;
         }
         return score;
     }
