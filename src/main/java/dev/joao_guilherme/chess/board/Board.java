@@ -35,6 +35,8 @@ public class Board implements Cloneable {
     private Map<Color, Set<Piece>> pieces;
     private Map<Position, Piece> pieceByPosition;
     private Color turn;
+    private int halfMoveClock = 0;
+    private final Map<Long, Integer> positionHistory = new HashMap<>();
 
     public Board(EventPublisher eventPublisher) {
         this.eventPublisher = eventPublisher;
@@ -61,6 +63,8 @@ public class Board implements Cloneable {
         this.turn = board.turn;
         this.eventPublisher = new EventPublisher();
         this.enPassantAvailablePosition = board.enPassantAvailablePosition;
+        this.halfMoveClock = board.halfMoveClock;
+        this.positionHistory.putAll(board.positionHistory);
 
         for (Piece piece : board.getPieces()) {
             Piece clone = piece.clone();
@@ -139,9 +143,11 @@ public class Board implements Cloneable {
     public boolean promote(Position from, Position promotionPosition, Class<? extends Piece> tClass) {
         try {
             Piece promotedPiece = tClass.getConstructor(Color.class, Position.class).newInstance(turn, promotionPosition);
-            pieces.get(promotedPiece.getColor()).add(promotedPiece);
-            pieceByPosition.put(promotionPosition, promotedPiece);
-            Pawn pawn = (Pawn) getPieceAt(from);
+            Piece pieceAtTarget = getPieceAt(promotionPosition);
+            if (!(pieceAtTarget instanceof Pawn)) {
+                pieceAtTarget = getPieceAt(from);
+            }
+            Pawn pawn = (Pawn) pieceAtTarget;
             MoveRecord lastRecord = history.pop();
             if (lastRecord != null) {
                 MoveRecord completedRecord = new MoveRecord(
@@ -150,7 +156,8 @@ public class Board implements Cloneable {
                         promotedPiece,
                         lastRecord.enPassantSquareBefore(), lastRecord.enPassantSquareAfter(),
                         lastRecord.castling(), lastRecord.rookFrom(), lastRecord.rookTo(),
-                        lastRecord.oldMoveCount()
+                        lastRecord.oldMoveCount(),
+                        lastRecord.oldHalfMoveClock()
                 );
                 history.push(completedRecord);
             }
@@ -182,6 +189,21 @@ public class Board implements Cloneable {
                 pieceByPosition.remove(from);
                 pieces.get(piece.getColor()).add(promotedPiece);
                 pieceByPosition.put(to, promotedPiece);
+
+                MoveRecord record = new MoveRecord(
+                        from, to, piece,
+                        capturedPiece,
+                        piece,
+                        promotedPiece,
+                        epBefore,
+                        null,
+                        false,
+                        null, null,
+                        oldMoveCount,
+                        oldHalfMoveClock
+                );
+                recordMove(record);
+
                 nextTurn();
             } catch (Exception e) {
                 e.printStackTrace();
@@ -289,10 +311,18 @@ public class Board implements Cloneable {
             rook.incrementMoveCount();
         }
 
+        if (rec.movedPiece() instanceof Pawn || rec.capturedPiece() != null) {
+            halfMoveClock = 0;
+        } else {
+            halfMoveClock++;
+        }
+
         history.push(rec);
+        updatePositionHistory();
     }
 
     public void undo() {
+        decrementPositionHistory();
         MoveRecord rec = history.pop();
         if (rec == null) return;
 
@@ -327,7 +357,18 @@ public class Board implements Cloneable {
             rook.setMoveCount(rook.getMoveCount() - 1);
         }
 
+        this.halfMoveClock = rec.oldHalfMoveClock();
         history.pushRedo(rec);
+    }
+
+    private void updatePositionHistory() {
+        long key = Zobrist.computeHash(this);
+        positionHistory.merge(key, 1, Integer::sum);
+    }
+
+    private void decrementPositionHistory() {
+        long key = Zobrist.computeHash(this);
+        positionHistory.computeIfPresent(key, (k, v) -> v - 1);
     }
 
     public void addPiece(Piece piece) {
@@ -378,8 +419,16 @@ public class Board implements Cloneable {
         this.enPassantAvailablePosition = Position.of(from.file(), (from.rank() + to.rank()) / 2);
     }
 
-    public void recordMove(MoveRecord build) {
-        history.push(build);
+    public void recordMove(MoveRecord record) {
+        if (record.movedPiece() instanceof Pawn || record.capturedPiece() != null) {
+            halfMoveClock = 0;
+        } else {
+            halfMoveClock++;
+        }
+
+        history.push(record);
+
+        updatePositionHistory();
     }
 
     public Position getEnPassantAvailablePosition() {
