@@ -196,11 +196,15 @@ public class Board implements Cloneable {
         Piece piece = findPieceAt(from).orElse(null);
         if (piece == null || piece.getColor() != turn) return;
 
-        Optional<Piece> capturedOpt = findPieceAt(to);
-        if (capturedOpt.isPresent() && capturedOpt.get() != piece) {
-            Piece captured = capturedOpt.get();
-            capturePiece(captured);
+        Piece capturedPiece = findPieceAt(to).orElse(null);
+        int oldMoveCount = piece.getMoveCount();
+        int oldHalfMoveClock = halfMoveClock;
+        Position epBefore = enPassantAvailablePosition;
+
+        if (capturedPiece != null && capturedPiece != piece) {
+            capturePiece(capturedPiece);
         }
+
         if (piece.moveTo(this, to)) {
             try {
                 Piece promotedPiece = promotionPieceClass
