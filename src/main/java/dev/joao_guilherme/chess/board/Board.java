@@ -140,6 +140,28 @@ public class Board implements Cloneable {
         return !isCheck(color) && pieces.get(color).stream().allMatch(piece -> piece.getPossibleMoves(this).isEmpty());
     }
 
+    public boolean isDraw() {
+        return isFiftyMoveRule() || isThreefoldRepetition() || isStaleMate(turn) || isInsufficientMaterial();
+    }
+
+    public boolean isFiftyMoveRule() {
+        return halfMoveClock >= 100;
+    }
+
+    public boolean isThreefoldRepetition() {
+        long key = Zobrist.computeHash(this);
+        return positionHistory.getOrDefault(key, 0) >= 3;
+    }
+
+    public boolean isInsufficientMaterial() {
+        if (pieces.get(WHITE).size() > 2 || pieces.get(BLACK).size() > 2) return false;
+        return pieces.get(WHITE).size() == 1 && pieces.get(BLACK).size() == 1;
+    }
+
+    public int getHalfMoveClock() {
+        return halfMoveClock;
+    }
+
     public boolean promote(Position from, Position promotionPosition, Class<? extends Piece> tClass) {
         try {
             Piece promotedPiece = tClass.getConstructor(Color.class, Position.class).newInstance(turn, promotionPosition);
