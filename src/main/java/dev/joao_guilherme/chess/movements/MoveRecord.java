@@ -15,6 +15,7 @@ public record MoveRecord(
         boolean castling,
         Position rookFrom,
         Position rookTo,
-        int oldMoveCount
+        int oldMoveCount,
+        int oldHalfMoveClock
 ) {}
 
