@@ -7,6 +7,7 @@ import dev.joao_guilherme.chess.events.CaptureEvent;
 import dev.joao_guilherme.chess.movements.MoveHandler;
 import dev.joao_guilherme.chess.movements.MoveRecordBuilder;
 import dev.joao_guilherme.chess.movements.SupportsHistory;
+import dev.joao_guilherme.chess.pieces.King;
 import dev.joao_guilherme.chess.pieces.Piece;
 
 public class CaptureMoveHandler implements MoveHandler, SupportsHistory {
@@ -15,7 +16,7 @@ public class CaptureMoveHandler implements MoveHandler, SupportsHistory {
 
     @Override
     public boolean canHandle(Piece piece, Position from, Position to, Board board) {
-        return board.findPieceAt(to).map(p -> p.getColor() != piece.getColor()).isPresent();
+        return board.findPieceAt(to).map(p -> p.getColor() != piece.getColor() && !(p instanceof King)).isPresent();
     }
 
     @Override
