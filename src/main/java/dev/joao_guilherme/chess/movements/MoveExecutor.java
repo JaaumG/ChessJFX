@@ -22,6 +22,7 @@ public class MoveExecutor {
         if (piece == null) return false;
 
         MoveRecordBuilder recordBuilder = new MoveRecordBuilder(from, to, piece);
+        recordBuilder.oldHalfMoveClock(board.getHalfMoveClock());
         Position epBefore = board.getEnPassantAvailablePosition();
         recordBuilder.enPassantBefore(epBefore);
         for (MoveHandler handler : handlers) {
