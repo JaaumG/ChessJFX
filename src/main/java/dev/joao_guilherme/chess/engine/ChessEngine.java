@@ -17,16 +17,19 @@ import static dev.joao_guilherme.chess.movements.Movement.isCapturingMove;
 public class ChessEngine {
 
     private static final int DEPTH = 4;
-    private static final Class<? extends Piece>[] PROMOTION_PIECE = new Class[]{Queen.class, Rook.class, Bishop.class, Knight.class};
+    private static final int MAX_Q_DEPTH = 4;
+    private static final float MATE_SCORE = 1000000;
+    private static final Class<? extends Piece>[] PROMOTION_PIECES = new Class[]{Queen.class, Rook.class, Bishop.class, Knight.class};
     private static final TranspositionTable TT = new TranspositionTable();
 
     public static Move computeMove(Board board) {
-        return minimax(board, DEPTH, Float.NEGATIVE_INFINITY, Float.POSITIVE_INFINITY);
+        return minimax(board, DEPTH, 0, Float.NEGATIVE_INFINITY, Float.POSITIVE_INFINITY);
     }
 
-    public static Move minimax(Board board, int depth, float alpha, float beta) {
+    public static Move minimax(Board board, int depth, int ply, float alpha, float beta) {
         long zobristKey = Zobrist.computeHash(board);
         float alphaOriginal = alpha;
+
         Optional<Move> cache = getCache(zobristKey, depth, alpha, beta);
         if (cache.isPresent()) return cache.get();
 
@@ -40,25 +43,79 @@ public class ChessEngine {
         }
 
         boolean isMaximizing = Color.WHITE == board.getTurn();
+        Move bestMove = new Move(null, null, isMaximizing ? Float.NEGATIVE_INFINITY : Float.POSITIVE_INFINITY, null);
 
-        Move best = new Move(null, null, isMaximizing ? Float.NEGATIVE_INFINITY : Float.POSITIVE_INFINITY, null);
-        for (Move moveObj : generateAllMoves(board)) {
-            board.movePiece(moveObj.piece().getPosition(), moveObj.to());
-            Move eval = minimax(board, depth - 1, alpha, beta);
-            board.undo();
-            Move candidateMove = new Move(moveObj.piece(), moveObj.to(), eval.eval(), moveObj.promotion());
-            if (isMaximizing) {
-                if (eval.eval() > best.eval() || best.piece() == null) best = candidateMove;
-                alpha = Math.max(alpha, eval.eval());
-            } else {
-                if (eval.eval() < best.eval() || best.piece() == null) best = candidateMove;
-                beta = Math.min(beta, eval.eval());
+        List<Move> moves = generateAllMoves(board, false);
+
+        if (moves.isEmpty()) return new Move(null, null, 0, null);
+
+        for (Move moveObj : moves) {
+            if (board.movePiece(moveObj.piece().getPosition(), moveObj.to())) {
+
+                if (moveObj.promotion() != null) {
+                    board.promote(moveObj.piece().getPosition(), moveObj.to(), moveObj.promotion());
+                }
+
+                Move result = minimax(board, depth - 1, ply + 1, alpha, beta);
+
+                board.undo();
+
+                Move currentMove = new Move(moveObj.piece(), moveObj.to(), result.eval(), moveObj.promotion());
+
+                if (isMaximizing) {
+                    if (result.eval() > bestMove.eval() || bestMove.piece() == null) bestMove = currentMove;
+                    alpha = Math.max(alpha, result.eval());
+                } else {
+                    if (result.eval() < bestMove.eval() || bestMove.piece() == null) bestMove = currentMove;
+                    beta = Math.min(beta, result.eval());
+                }
+
+                if (beta <= alpha) break;
             }
-            if (beta <= alpha) break;
         }
 
-        saveCache(zobristKey, best, alphaOriginal, beta, depth);
-        return best;
+        saveCache(zobristKey, bestMove, alphaOriginal, beta, depth);
+        return bestMove;
+    }
+
+    private static float quiescenceSearch(Board board, float alpha, float beta, int qDepth) {
+        return quiescenceSearchMinMax(board, alpha, beta, qDepth);
+    }
+
+    private static float quiescenceSearchMinMax(Board board, float alpha, float beta, int qDepth) {
+        if (qDepth > MAX_Q_DEPTH) return BoardEvaluator.evaluate(board);
+
+        float standPat = BoardEvaluator.evaluate(board);
+        boolean isMaximizing = board.getTurn() == Color.WHITE;
+
+        if (isMaximizing) {
+            if (standPat >= beta) return beta;
+            if (standPat > alpha) alpha = standPat;
+        } else {
+            if (standPat <= alpha) return alpha;
+            if (standPat < beta) beta = standPat;
+        }
+
+        List<Move> captures = generateAllMoves(board, true);
+
+        for (Move move : captures) {
+            if (board.movePiece(move.piece().getPosition(), move.to())) {
+                if (move.promotion() != null) board.promote(move.piece().getPosition(), move.to(), move.promotion());
+
+                // Passa qDepth + 1
+                float score = quiescenceSearchMinMax(board, alpha, beta, qDepth + 1);
+                board.undo();
+
+                if (isMaximizing) {
+                    if (score >= beta) return beta;
+                    if (score > alpha) alpha = score;
+                } else {
+                    if (score <= alpha) return alpha;
+                    if (score < beta) beta = score;
+                }
+            }
+        }
+        return isMaximizing ? alpha : beta;
     }
 
     private static Optional<Move> getCache(long zobristKey, int depth, float alpha, float beta) {
