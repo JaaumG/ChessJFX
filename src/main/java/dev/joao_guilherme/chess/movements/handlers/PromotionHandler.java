@@ -9,6 +9,8 @@ import dev.joao_guilherme.chess.movements.SupportsHistory;
 import dev.joao_guilherme.chess.pieces.Pawn;
 import dev.joao_guilherme.chess.pieces.Piece;
 
+import java.util.Optional;
+
 public class PromotionHandler implements MoveHandler, SupportsHistory {
 
     private MoveRecordBuilder record;
@@ -27,7 +29,17 @@ public class PromotionHandler implements MoveHandler, SupportsHistory {
     public boolean handle(Piece piece, Position from, Position to, Board board) {
         Pawn pawn = (Pawn) piece;
 
+        Optional<Piece> capturedOpt = board.findPieceAt(to);
+        Piece captured = null;
+        if (capturedOpt.isPresent() && capturedOpt.get().getColor() != piece.getColor()) {
+            captured = capturedOpt.get();
+        }
         if (!pawn.moveTo(board, to)) return false;
+
+        if (captured != null) {
+            record.captured(captured);
+            board.capturePiece(captured);
+        }
 
         board.updatePiecePosition(pawn, from, to);
 
