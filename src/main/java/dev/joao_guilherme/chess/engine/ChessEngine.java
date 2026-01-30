@@ -29,7 +29,15 @@ public class ChessEngine {
         float alphaOriginal = alpha;
         Optional<Move> cache = getCache(zobristKey, depth, alpha, beta);
         if (cache.isPresent()) return cache.get();
-        if (depth == 0 || board.isCheckMate(board.getTurn())) return new Move(null, null, BoardEvaluator.evaluate(board), null);
+
+        if (board.isCheckMate(Color.WHITE)) return new Move(null, null, -MATE_SCORE + ply, null);
+        if (board.isCheckMate(Color.BLACK)) return new Move(null, null, MATE_SCORE - ply, null);
+        if (board.isDraw()) return new Move(null, null, 0, null);
+
+        if (depth == 0) {
+            float score = quiescenceSearch(board, alpha, beta, 0);
+            return new Move(null, null, score, null);
+        }
 
         boolean isMaximizing = Color.WHITE == board.getTurn();
 
