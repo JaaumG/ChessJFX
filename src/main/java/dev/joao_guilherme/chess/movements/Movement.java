@@ -102,7 +102,7 @@ public abstract class Movement {
         if (distance(from, to) != 2) return false;
         if (!noPieceAtTarget(board, to)) return false;
         if (!isUpward(from, to, color)) return false;
-        return board.isEnPassantLocation(to);
+        return board.isEnPassantLocation(color, to);
     }
 
     public static boolean noPieceAtTarget(Board board, Position to) {
